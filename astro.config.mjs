@@ -19,7 +19,30 @@ export default defineConfig({
 			],
 			lastUpdated: true,
 			tableOfContents: { minHeadingLevel: 2, maxHeadingLevel: 4 },
-			customCss: ['./src/styles/custom.css'],
+			expressiveCode: {
+				// Vitesse is warm and low-contrast — it stops code blocks from
+				// being the harshest thing on the page in either theme.
+				themes: ['vitesse-dark', 'vitesse-light'],
+				// Only non-colour values here. Expressive Code *parses* colour
+				// options (it derives contrast from them), so a `var(--token)`
+				// string fails to parse and silently resolves to transparent.
+				// The palette is wired to its `--ec-*` custom properties in
+				// src/styles/custom.css instead.
+				styleOverrides: {
+					codeFontFamily: 'var(--sl-font-mono)',
+					codeFontSize: '0.85rem',
+					codeLineHeight: '1.65',
+					codePaddingBlock: '0.85rem',
+				},
+			},
+			customCss: [
+				'@fontsource-variable/inter/wght.css',
+				'@fontsource-variable/newsreader/wght.css',
+				'@fontsource-variable/newsreader/wght-italic.css',
+				'@fontsource-variable/jetbrains-mono/wght.css',
+				'./src/styles/theme.css',
+				'./src/styles/custom.css',
+			],
 			sidebar: [
 				{
 					label: 'Start here',

@@ -1,0 +1,169 @@
+/* =========================================================================
+   Zed Rust for Dummies — palette
+   -------------------------------------------------------------------------
+   Two themes that are deliberately *not* inversions of each other:
+
+   Dark  — "ink & ember".  A deep indigo-slate rather than neutral grey, so
+           the page has a hue to sit in, with a warm ember accent for links.
+   Light — "parchment".    A warm off-white with soft ink text, so nothing on
+           the page is pure #fff on #000. Long reading sessions, low glare.
+
+   Both share the same accent *hue family* (warm amber → burnt sienna) so the
+   site reads as one design in either mode.
+   ========================================================================= */
+
+:root {
+	--sl-font: 'Inter Variable', ui-sans-serif, system-ui, -apple-system,
+		'Segoe UI', sans-serif;
+	--sl-font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular,
+		'SF Mono', Menlo, Consolas, monospace;
+	--zrd-font-display: 'Newsreader Variable', ui-serif, Georgia, 'Times New Roman',
+		serif;
+
+	--zrd-radius: 0.75rem;
+	--zrd-radius-sm: 0.5rem;
+	--zrd-measure: 68ch;
+}
+
+/* -------------------------------------------------------------------------
+   DARK — ink & ember
+   ------------------------------------------------------------------------- */
+
+:root,
+:root[data-theme='dark'] {
+	color-scheme: dark;
+
+	/* Accent: warm ember. Reads as a highlight against cool slate. */
+	--sl-color-accent-low: hsl(26 55% 15%);
+	--sl-color-accent: hsl(28 82% 55%);
+	--sl-color-accent-high: hsl(32 92% 78%);
+
+	/* Neutrals, cool indigo-slate rather than pure grey. */
+	--sl-color-white: hsl(228 30% 97%);
+	--sl-color-gray-1: hsl(226 22% 92%);
+	--sl-color-gray-2: hsl(224 15% 82%);
+	--sl-color-gray-3: hsl(224 11% 64%);
+	--sl-color-gray-4: hsl(226 11% 44%);
+	--sl-color-gray-5: hsl(228 14% 26%);
+	--sl-color-gray-6: hsl(230 17% 15%);
+	--sl-color-gray-7: hsl(230 19% 12%);
+	--sl-color-black: hsl(232 22% 8%);
+
+	--sl-color-text: hsl(224 16% 84%);
+	--sl-color-text-accent: hsl(31 90% 70%);
+	--sl-color-text-invert: hsl(232 22% 8%);
+
+	--sl-color-bg: hsl(232 22% 8%);
+	--sl-color-bg-nav: hsl(232 24% 7% / 0.72);
+	--sl-color-bg-sidebar: hsl(232 23% 7%);
+	--sl-color-bg-inline-code: hsl(230 18% 17%);
+	--sl-color-bg-accent: var(--sl-color-accent);
+
+	--sl-color-hairline: hsl(230 16% 18%);
+	--sl-color-hairline-light: hsl(230 15% 22%);
+	--sl-color-hairline-shade: hsl(232 22% 6%);
+
+	--sl-color-backdrop-overlay: hsl(232 26% 5% / 0.78);
+	--sl-shadow-md: 0 1px 2px hsl(232 30% 3% / 0.5),
+		0 8px 24px -12px hsl(232 30% 3% / 0.6);
+	--sl-shadow-lg: 0 1px 2px hsl(232 30% 3% / 0.5),
+		0 16px 48px -16px hsl(232 40% 2% / 0.75);
+
+	/* Site-local tokens */
+	--zrd-surface: hsl(230 19% 11%);
+	--zrd-surface-raised: hsl(230 18% 13%);
+	/* Code sits clearly above the page rather than blending into it. */
+	--zrd-code-bg: hsl(230 20% 13%);
+	--zrd-code-chrome: hsl(230 19% 16%);
+	--zrd-code-border: hsl(230 16% 22%);
+	--zrd-quote-bg: hsl(230 19% 11%);
+	--zrd-quote-rule: hsl(28 62% 38%);
+	--zrd-selection: hsl(28 80% 55% / 0.28);
+	--zrd-glow: radial-gradient(
+		62rem 32rem at 12% -6%,
+		hsl(28 80% 50% / 0.13),
+		transparent 62%
+	);
+	--zrd-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.055'/%3E%3C/svg%3E");
+
+	/* Semantic tints for asides / callouts */
+	--zrd-note: hsl(210 85% 66%);
+	--zrd-note-bg: hsl(212 60% 50% / 0.1);
+	--zrd-tip: hsl(158 62% 55%);
+	--zrd-tip-bg: hsl(158 55% 45% / 0.1);
+	--zrd-caution: hsl(38 92% 62%);
+	--zrd-caution-bg: hsl(38 80% 52% / 0.11);
+	--zrd-danger: hsl(354 82% 68%);
+	--zrd-danger-bg: hsl(354 70% 55% / 0.11);
+}
+
+/* -------------------------------------------------------------------------
+   LIGHT — parchment
+   ------------------------------------------------------------------------- */
+
+:root[data-theme='light'] {
+	color-scheme: light;
+
+	/* Accent: burnt sienna. Same hue family as the ember, darkened to hold
+	   contrast against a warm background. */
+	--sl-color-accent-low: hsl(30 62% 89%);
+	--sl-color-accent: hsl(19 72% 40%);
+	--sl-color-accent-high: hsl(17 68% 27%);
+
+	/* In light mode Starlight inverts the ramp: --white is the darkest ink. */
+	--sl-color-white: hsl(228 24% 14%);
+	--sl-color-gray-1: hsl(228 20% 20%);
+	--sl-color-gray-2: hsl(226 14% 30%);
+	--sl-color-gray-3: hsl(226 10% 45%);
+	--sl-color-gray-4: hsl(226 9% 58%);
+	--sl-color-gray-5: hsl(36 18% 82%);
+	--sl-color-gray-6: hsl(38 28% 93%);
+	--sl-color-gray-7: hsl(40 32% 95%);
+	--sl-color-black: hsl(40 38% 97.5%);
+
+	--sl-color-text: hsl(228 17% 25%);
+	--sl-color-text-accent: hsl(18 74% 37%);
+	--sl-color-text-invert: hsl(40 38% 98%);
+
+	--sl-color-bg: hsl(40 38% 97.5%);
+	--sl-color-bg-nav: hsl(40 40% 97% / 0.78);
+	--sl-color-bg-sidebar: hsl(39 34% 95.5%);
+	--sl-color-bg-inline-code: hsl(37 34% 91%);
+	--sl-color-bg-accent: var(--sl-color-accent);
+
+	--sl-color-hairline: hsl(36 22% 87%);
+	--sl-color-hairline-light: hsl(36 20% 90%);
+	--sl-color-hairline-shade: hsl(36 24% 84%);
+
+	--sl-color-backdrop-overlay: hsl(36 24% 88% / 0.8);
+	--sl-shadow-md: 0 1px 2px hsl(30 25% 40% / 0.06),
+		0 8px 24px -14px hsl(30 30% 30% / 0.16);
+	--sl-shadow-lg: 0 1px 2px hsl(30 25% 40% / 0.06),
+		0 16px 44px -18px hsl(30 30% 28% / 0.2);
+
+	--zrd-surface: hsl(39 36% 96%);
+	--zrd-surface-raised: hsl(42 44% 98%);
+	/* Slightly deeper than the page so code reads as an inset panel — and
+	   never the pure white the upstream light code theme would use. */
+	--zrd-code-bg: hsl(38 32% 94%);
+	--zrd-code-chrome: hsl(37 28% 91%);
+	--zrd-code-border: hsl(36 22% 85%);
+	--zrd-quote-bg: hsl(38 34% 95%);
+	--zrd-quote-rule: hsl(22 60% 62%);
+	--zrd-selection: hsl(24 82% 55% / 0.2);
+	--zrd-glow: radial-gradient(
+		62rem 32rem at 12% -6%,
+		hsl(26 82% 56% / 0.16),
+		transparent 62%
+	);
+	--zrd-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+
+	--zrd-note: hsl(212 68% 40%);
+	--zrd-note-bg: hsl(212 68% 48% / 0.09);
+	--zrd-tip: hsl(162 58% 28%);
+	--zrd-tip-bg: hsl(160 52% 40% / 0.1);
+	--zrd-caution: hsl(28 78% 38%);
+	--zrd-caution-bg: hsl(34 82% 55% / 0.12);
+	--zrd-danger: hsl(352 66% 42%);
+	--zrd-danger-bg: hsl(352 70% 55% / 0.1);
+}
