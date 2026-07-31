@@ -582,13 +582,17 @@ starlight-toc a[aria-current='true']:hover {
 	border: 1px solid var(--sl-color-hairline);
 	border-radius: var(--zrd-radius);
 	padding: 1.3rem;
-	transition: border-color 160ms ease, transform 160ms ease,
+	/* Deliberately no `transform` here. `<CardGrid stagger>` positions every
+	   even card with `transform: translateY(5rem)`, so a hover transform
+	   replaces it and the card leaps 5rem up and back. The hover affordance is
+	   border, shadow, and the arrow slide in SectionCard.astro instead. */
+	transition: border-color 160ms ease, background 160ms ease,
 		box-shadow 160ms ease;
 }
 
 .card:hover {
-	border-color: color-mix(in oklab, var(--sl-color-accent) 42%, transparent);
-	transform: translateY(-2px);
+	border-color: color-mix(in oklab, var(--sl-color-accent) 45%, transparent);
+	background: var(--zrd-surface-raised);
 	box-shadow: var(--sl-shadow-md);
 }
 
@@ -601,6 +605,7 @@ starlight-toc a[aria-current='true']:hover {
 }
 
 .card .title {
+	font-family: var(--zrd-font-display);
 	font-size: 1.1rem;
 	font-weight: 600;
 	color: var(--sl-color-white);

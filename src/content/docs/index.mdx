@@ -16,7 +16,8 @@ hero:
       variant: minimal
 ---
 
-import { Card, CardGrid, Aside } from '@astrojs/starlight/components';
+import { CardGrid, Aside } from '@astrojs/starlight/components';
+import SectionCard from '../../components/SectionCard.astro';
 
 <Aside type="tip" title="The single most important fact on this site">
 A Zed core maintainer looked at the previous attempt at this feature and wrote:
@@ -45,26 +46,26 @@ programming and is **not** yet fluent in Rust. Every Rust and GPUI concept the
 diff depends on is explained from scratch, in the order the diff needs it.
 
 <CardGrid stagger>
-	<Card title="It teaches the Rust" icon="seti:rust">
+	<SectionCard title="It teaches the Rust" icon="seti:rust" href="/rust/how-to-use/">
 		Ownership, borrowing, lifetimes, traits, `Arc`, closures versus `fn`
 		pointers — but only the eight things this PR actually touches, each
 		anchored to a real line in the diff.
-	</Card>
-	<Card title="It teaches the architecture" icon="puzzle">
+	</SectionCard>
+	<SectionCard title="It teaches the architecture" icon="puzzle" href="/architecture/overview/">
 		Seven design documents, each with a plain-English opening, the
 		alternatives that were weighed, why they lost, and a confidence rating
 		with the residual risk named out loud.
-	</Card>
-	<Card title="It is honest about the gaps" icon="warning">
+	</SectionCard>
+	<SectionCard title="It is honest about the gaps" icon="warning" href="/gaps/the-honest-list/">
 		Ten known limitations, including the two big ones: syntax highlighting is
 		still global, and mermaid diagrams fall back to the configured theme. Both
 		are documented with the reason and the cost of a fix.
-	</Card>
-	<Card title="It prepares you for the review" icon="approve-check">
+	</SectionCard>
+	<SectionCard title="It prepares you for the review" icon="approve-check" href="/defending/objections/">
 		The objections a reviewer will actually raise, with answers. The process
 		gate that killed a sibling PR. And the AI-policy conversation that has
 		already happened once in this exact thread.
-	</Card>
+	</SectionCard>
 </CardGrid>
 
 ## The shortest possible version

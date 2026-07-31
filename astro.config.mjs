@@ -17,6 +17,7 @@ export default defineConfig({
 					href: 'https://github.com/zed-industries/zed',
 				},
 			],
+			favicon: '/favicon.svg',
 			lastUpdated: true,
 			tableOfContents: { minHeadingLevel: 2, maxHeadingLevel: 4 },
 			expressiveCode: {

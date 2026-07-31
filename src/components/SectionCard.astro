@@ -1,0 +1,174 @@
+---
+/**
+ * A Starlight `<Card>` that is actually a link.
+ *
+ * Starlight's `<Card>` has no `href`, so the splash-page cards animated on
+ * hover and then did nothing on click.
+ *
+ * Accessibility approach (mirrors Starlight's own `<LinkCard>`, which cites
+ * withastro/starlight#487): the `<a>` wraps ONLY the title, and a `::before`
+ * pseudo-element stretches to cover the whole card. That gives:
+ *
+ * - a concise accessible name — screen readers announce "It teaches the Rust,
+ *   link", not the whole card body as link text;
+ * - one tab stop per card rather than one per interactive descendant;
+ * - the full card as a pointer/touch target.
+ *
+ * Known trade-off of the stretched-link pattern: body text inside the card is
+ * no longer selectable. Accepted — these are navigation cards, and it is the
+ * same trade-off upstream `<LinkCard>` makes.
+ *
+ * Note there is deliberately NO `transform` on card hover. `<CardGrid stagger>`
+ * positions every even card with `transform: translateY(5rem)`, so any hover
+ * transform replaces it and the card jumps 5rem up and back.
+ */
+import type { ComponentProps } from 'astro/types';
+import { Icon } from '@astrojs/starlight/components';
+
+interface Props {
+	/** Starlight icon name shown in the title row. Decorative — `Icon` marks it `aria-hidden`. */
+	icon?: ComponentProps<typeof Icon>['name'];
+	title: string;
+	/** Destination — the page this card describes. */
+	href: string;
+}
+
+const { icon, title, href } = Astro.props;
+---
+
+{/*
+	`not-content` opts this out of `.sl-markdown-content`'s prose styling. Without
+	it the global link rule wins over the component's scoped styles (unlayered
+	beats `@layer starlight.components`), and every card title renders
+	permanently underlined and accent-coloured — i.e. stuck in its hover state.
+*/}
+<article class="card section-card sl-flex not-content">
+	<p class="title sl-flex">
+		{icon && <Icon name={icon} class="icon" size="1.333em" />}
+		<a class="card-link" href={href}><span set:html={title} /></a>
+		<Icon name="right-arrow" class="arrow rtl:flip" size="1.1em" />
+	</p>
+	<div class="body"><slot /></div>
+</article>
+
+<style>
+	@layer starlight.components {
+		/* Layout mirrors Starlight's Card.astro so this sits in a <CardGrid>
+		   beside stock cards without visual drift. Surface, border and radius
+		   come from `.card` in custom.css. */
+		.card {
+			padding: 1.3rem;
+			flex-direction: column;
+			gap: clamp(0.5rem, calc(0.125rem + 1vw), 1rem);
+		}
+
+		.title {
+			font-family: var(--zrd-font-display);
+			font-weight: 600;
+			font-size: 1.1rem;
+			letter-spacing: -0.012em;
+			color: var(--sl-color-white);
+			line-height: var(--sl-line-height-headings);
+			gap: 0.75rem;
+			align-items: center;
+			margin: 0;
+		}
+
+		.card .icon {
+			color: var(--sl-color-accent);
+			background-color: var(--sl-color-accent-low);
+			border-radius: 0.55rem;
+			padding: 0.3em;
+			flex-shrink: 0;
+		}
+
+		.card .body {
+			margin: 0;
+			color: var(--sl-color-gray-2);
+		}
+
+		/* `not-content` also opts out of the prose `code` styling, so the inline
+		   chips are restored here. `:global` because the markup comes via slot. */
+		.card .body :global(code) {
+			font-family: var(--sl-font-mono);
+			font-size: 0.86em;
+			font-weight: 500;
+			padding: 0.14em 0.4em;
+			border-radius: 0.36em;
+			border: 1px solid var(--zrd-code-border);
+			background: var(--sl-color-bg-inline-code);
+			color: var(--sl-color-gray-1);
+		}
+
+		/* ── Link behaviour ──────────────────────────────────────────────── */
+		.section-card {
+			position: relative;
+			cursor: pointer;
+		}
+
+		.card-link {
+			color: inherit;
+			text-decoration: none;
+		}
+
+		/* Stretched hit area — see the component doc comment above. */
+		.card-link::before {
+			content: '';
+			position: absolute;
+			inset: 0;
+			border-radius: inherit;
+		}
+
+		/* An underline is a non-colour affordance, so the link is still evident
+		   to anyone who cannot distinguish the ember hover (WCAG 1.4.1). */
+		.section-card:hover .card-link {
+			text-decoration: underline;
+			text-underline-offset: 0.15em;
+			text-decoration-thickness: 1px;
+		}
+
+		.arrow {
+			margin-inline-start: auto;
+			flex-shrink: 0;
+			color: var(--sl-color-gray-4);
+			transition:
+				transform 0.18s ease,
+				color 0.18s ease;
+		}
+
+		.section-card:hover .arrow {
+			transform: translateX(0.25em);
+			color: var(--sl-color-accent);
+		}
+
+		/* ── Focus ───────────────────────────────────────────────────────────
+		   Ring the whole card, not just the title, so keyboard focus matches
+		   the visible hit area. The base rule stands alone so browsers without
+		   :has() still get a visible indicator rather than none. */
+		.card-link:focus-visible {
+			outline: 2px solid var(--sl-color-accent);
+			outline-offset: 2px;
+			border-radius: 2px;
+		}
+
+		@supports selector(:has(*)) {
+			.section-card:has(.card-link:focus-visible) {
+				outline: 2px solid var(--sl-color-accent);
+				outline-offset: 3px;
+			}
+			.section-card:has(.card-link:focus-visible) .card-link:focus-visible {
+				outline: none;
+			}
+		}
+
+		/* ── Reduced motion (WCAG 2.3.3) ─────────────────────────────────── */
+		@media (prefers-reduced-motion: reduce) {
+			.arrow {
+				transition: none;
+			}
+			.section-card:hover .arrow {
+				transform: none;
+			}
+		}
+	}
+</style>
