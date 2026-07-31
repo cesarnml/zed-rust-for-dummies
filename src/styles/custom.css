@@ -1,0 +1,26 @@
+:root {
+	--sl-color-accent-low: #14304a;
+	--sl-color-accent: #2f6f9f;
+	--sl-color-accent-high: #b3d5ee;
+}
+
+:root[data-theme='light'] {
+	--sl-color-accent-low: #cfe4f2;
+	--sl-color-accent: #1f5c8b;
+	--sl-color-accent-high: #10334d;
+}
+
+/* Tables in this site are mostly decision matrices — let them breathe. */
+.sl-markdown-content table {
+	font-size: 0.9rem;
+}
+
+.sl-markdown-content table td,
+.sl-markdown-content table th {
+	vertical-align: top;
+}
+
+/* Long code samples are the point of this site; don't cap them too aggressively. */
+.sl-markdown-content pre {
+	max-height: none;
+}

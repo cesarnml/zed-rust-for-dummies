@@ -1,0 +1,91 @@
+---
+title: Zed Rust for Dummies
+description: A TypeScript developer's field guide to defending a 307-file Rust PR against the Zed codebase — per-window theme overrides.
+template: splash
+hero:
+  tagline: |
+    You wrote a 307-file change to a Rust codebase you are still learning. This site
+    exists so you can walk into that review and answer every question yourself.
+  actions:
+    - text: Read this first
+      link: /start/read-this-first/
+      icon: right-arrow
+    - text: The seven rewrite shapes
+      link: /migration/shapes/
+      icon: document
+      variant: minimal
+---
+
+import { Card, CardGrid, Aside } from '@astrojs/starlight/components';
+
+<Aside type="tip" title="The single most important fact on this site">
+A Zed core maintainer looked at the previous attempt at this feature and wrote:
+*"it seems like the 'simplest' solution would be to move `ActiveTheme` onto window
+— you'd need a window to grab the active theme, but I think that's ok. Yes, this
+will result in more code being changed, but ultimately I feel like that'd be way
+more correct and straightforward to reason about."*
+
+That is a description of the branch this site documents. The 307-file diff is not
+a contributor's unsolicited refactor. It is the requested change.
+See [Where the PR actually stands](/start/standing/).
+</Aside>
+
+## What this is
+
+A study guide for one specific piece of work: **per-window theme overrides in
+[Zed](https://github.com/zed-industries/zed)** — letting each editor window use
+its own theme so you can tell a production checkout from a staging one at a glance.
+
+The branch is `cesar/per-window-theme`. It touches **307 files, +4,701 / −3,078
+lines**. Roughly 2,900 of those lines are one mechanical rewrite repeated ~1,800
+times. The remaining ~200 lines are the actual feature.
+
+The site is written for someone who is fluent in TypeScript and functional
+programming and is **not** yet fluent in Rust. Every Rust and GPUI concept the
+diff depends on is explained from scratch, in the order the diff needs it.
+
+<CardGrid stagger>
+	<Card title="It teaches the Rust" icon="seti:rust">
+		Ownership, borrowing, lifetimes, traits, `Arc`, closures versus `fn`
+		pointers — but only the eight things this PR actually touches, each
+		anchored to a real line in the diff.
+	</Card>
+	<Card title="It teaches the architecture" icon="puzzle">
+		Seven design documents, each with a plain-English opening, the
+		alternatives that were weighed, why they lost, and a confidence rating
+		with the residual risk named out loud.
+	</Card>
+	<Card title="It is honest about the gaps" icon="warning">
+		Ten known limitations, including the two big ones: syntax highlighting is
+		still global, and mermaid diagrams fall back to the configured theme. Both
+		are documented with the reason and the cost of a fix.
+	</Card>
+	<Card title="It prepares you for the review" icon="approve-check">
+		The objections a reviewer will actually raise, with answers. The process
+		gate that killed a sibling PR. And the AI-policy conversation that has
+		already happened once in this exact thread.
+	</Card>
+</CardGrid>
+
+## The shortest possible version
+
+Zed's theme is a single global value. Every part of the UI asked one question —
+*"what's the theme?"* — and got one answer. To let one window differ from another,
+every part of the UI has to ask a slightly different question: *"what's the theme
+**for this window**?"*
+
+The feature is ~200 lines. Making the question un-askable the old way is ~2,900.
+
+That trade — deleting the old accessor so the compiler enumerates all 1,800 call
+sites, instead of hand-auditing them — is the whole argument of the PR, and it is
+the thing you need to be able to defend without notes.
+
+## Suggested reading order
+
+1. **[Read this first](/start/read-this-first/)** — the situation, honestly assessed.
+2. **[Rust, for a TypeScript brain](/rust/how-to-use/)** — skip if you already have it.
+3. **[GPUI, in plain English](/gpui/model/)** — the framework's four nouns.
+4. **[The architecture](/architecture/overview/)** — the three pieces and seven decisions.
+5. **[The seven rewrite shapes](/migration/shapes/)** — what reviewers will probe.
+6. **[Known gaps](/gaps/the-honest-list/)** — say these before anyone finds them.
+7. **[Defending it](/defending/objections/)** — the actual conversation.

@@ -1,0 +1,95 @@
+# Zed Rust for Dummies
+
+A TypeScript developer's field guide to defending a 307-file Rust pull request against
+the [Zed](https://github.com/zed-industries/zed) codebase.
+
+**Live site: <https://zed-rust-oss-for-dummies.vercel.app>**
+
+---
+
+## What this documents
+
+One specific piece of work: **per-window theme overrides in Zed** — letting each editor
+window use its own theme so you can tell a production checkout from a staging one at a
+glance.
+
+The branch is `cesar/per-window-theme`. It touches **307 files, +4,701 / −3,078 lines**.
+Roughly 2,900 of those lines are one mechanical rewrite repeated ~1,800 times. The
+remaining ~200 lines are the actual feature.
+
+## Why it exists
+
+Because the person who wrote that branch is fluent in TypeScript and functional
+programming, and is not yet fluent in Rust — and a change that size will be questioned in
+review by people who are.
+
+The site teaches, from scratch and in the order the diff needs it:
+
+- **The Rust** — ownership, borrowing, lifetimes, traits, `Arc`, closures vs `fn`
+  pointers, `'static`/`Send` bounds, macros. Only the eight concepts this PR touches,
+  each anchored to a real line in the diff.
+- **GPUI** — Zed's UI framework, in four nouns, plus the one missing feature
+  (window-scoped globals) that shaped the entire design.
+- **The architecture** — seven design documents, each with a plain-English opening, the
+  alternatives that were weighed, why they lost, and a confidence rating with the
+  residual risk named out loud.
+- **The migration** — the seven rewrite shapes reviewers actually probe, and why the
+  naive version of each doesn't compile.
+- **The gaps** — ten known limitations, including the two big ones (syntax highlighting
+  is still global; mermaid diagrams fall back to the configured theme), each with the
+  reason and the cost of a fix.
+- **The defence** — the objections a reviewer will realistically raise, the process gate
+  that closed a sibling PR without any code review, and Zed's AI policy.
+
+## The premise worth correcting
+
+The site opens by disproving one of its own author's assumptions.
+
+A Zed core maintainer reviewed the previous attempt at this feature
+([PR #58755](https://github.com/zed-industries/zed/pull/58755)) and wrote:
+
+> it seems like the "simplest" solution would be to move `ActiveTheme` onto window —
+> you'd need a window to grab the active theme, but I think that's ok. Yes, this will
+> result in more code being changed, but ultimately I feel like that'd be way more
+> correct and straightforward to reason about. You should not have to touch gpui at all
+> to make this change.
+
+That is a description of the branch this site documents, including the diff size, which
+was accepted in advance. The PR is not an unsolicited refactor — it is the requested
+change.
+
+## A note on the source material
+
+Much of the design and gap analysis derives from working notes kept alongside the branch
+in `notes/private/`. This site restructures that material, adds the Rust and GPUI teaching
+layer, and verifies its claims against the actual diff.
+
+Everything here is **material to understand, not text to paste**. Zed's `CONTRIBUTING.md`
+asks contributors not to use LLMs to write their replies to maintainers, and that request
+has already been made once in the exact review thread this work lands in. The point of the
+site is to make its author able to answer without it.
+
+## Running locally
+
+```bash
+npm install
+npm run dev      # → localhost:4321
+npm run build    # → ./dist
+```
+
+Built with [Astro](https://astro.build) and [Starlight](https://starlight.astro.build).
+
+## Related links
+
+| | |
+|---|---|
+| The PR this responds to | [zed-industries/zed#58755](https://github.com/zed-industries/zed/pull/58755) |
+| Primary feature request | [#13300](https://github.com/zed-industries/zed/issues/13300) — open, 133 👍 |
+| The accessibility case | [#58381](https://github.com/zed-industries/zed/issues/58381) |
+| The sibling PR closed on process | [#58861](https://github.com/zed-industries/zed/pull/58861) |
+| Cross-editor precedent | [VS Code Peacock](https://github.com/johnpapa/vscode-peacock) |
+
+## License
+
+MIT for the site's own code. Quoted Zed source and GitHub comments belong to their
+respective authors and are reproduced here for review and educational purposes.
