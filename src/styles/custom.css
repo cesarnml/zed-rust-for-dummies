@@ -690,3 +690,13 @@ footer .meta a {
 	outline-offset: 2px;
 	border-radius: 0.25rem;
 }
+
+/* SectionCard rings the whole card and suppresses the ring on the title link,
+   but that suppression lives in `@layer starlight.components` — and unlayered
+   rules beat layered ones at any specificity, so the global rule above was
+   re-adding it and focusing a card drew two rings. Re-stated unlayered here. */
+@supports selector(:has(*)) {
+	.section-card:has(.card-link:focus-visible) .card-link:focus-visible {
+		outline: none;
+	}
+}
