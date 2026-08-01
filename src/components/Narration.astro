@@ -1,0 +1,435 @@
+---
+/**
+ * Narration player for the current page.
+ *
+ * Renders only when `npm run narrate` has produced audio for this page, so the
+ * site degrades to plain text rather than showing a dead control.
+ *
+ * Two modes are being served here, and they pull in opposite directions:
+ *
+ * - Read-along, to reinforce a first read. That is what the sentence
+ *   highlighting and click-to-seek are for — the eye stays on the real
+ *   `window.theme(cx)` while the audio says "window dot theme of context".
+ * - Eyes off. That is what auto-advance and position memory are for: the
+ *   four-hour listen should not need a click per page, and dozing off should
+ *   not cost you your place.
+ *
+ * The audio element is `preload="none"`, so a visitor who never presses play
+ * downloads none of the ~90 MB.
+ */
+import fs from 'node:fs';
+import path from 'node:path';
+
+interface Props {
+	/** Href of the next page in sidebar order, for auto-advance. */
+	next?: string | undefined;
+}
+
+const { next } = Astro.props;
+
+// `/rust/ownership/` → `rust/ownership`, matching the key narrate.mjs derives
+// from the built file's path.
+const key = Astro.url.pathname.replace(/^\/|\/$/g, '') || 'index';
+
+const sidecarPath = path.join(process.cwd(), 'public/audio', `${key}.json`);
+const hasAudio = fs.existsSync(sidecarPath);
+
+let duration = 0;
+if (hasAudio) {
+	try {
+		duration = JSON.parse(fs.readFileSync(sidecarPath, 'utf8')).duration ?? 0;
+	} catch {
+		duration = 0;
+	}
+}
+
+const minutes = Math.round(duration / 60);
+---
+
+{
+	hasAudio && (
+		<div class="tts not-content" data-tts-player data-key={key} data-next={next ?? ''}>
+			<button class="tts-play" type="button" aria-label="Play narration">
+				<svg class="tts-icon-play" viewBox="0 0 24 24" aria-hidden="true">
+					<path d="M8 5v14l11-7z" />
+				</svg>
+				<svg class="tts-icon-pause" viewBox="0 0 24 24" aria-hidden="true">
+					<path d="M6 5h4v14H6zM14 5h4v14h-4z" />
+				</svg>
+			</button>
+
+			<div class="tts-body">
+				<div
+					class="tts-scrub"
+					role="slider"
+					tabindex="0"
+					aria-label="Seek"
+					aria-valuemin="0"
+					aria-valuemax={Math.round(duration)}
+					aria-valuenow="0"
+				>
+					<div class="tts-track">
+						<div class="tts-fill" />
+					</div>
+				</div>
+				<div class="tts-meta">
+					<span class="tts-time">
+						<span class="tts-elapsed">0:00</span>
+						<span class="tts-sep"> / </span>
+						<span class="tts-total">{minutes} min</span>
+					</span>
+					<span class="tts-controls">
+						<button class="tts-rate" type="button" aria-label="Playback speed">
+							1×
+						</button>
+						<label class="tts-chain">
+							<input type="checkbox" checked />
+							<span>keep playing</span>
+						</label>
+					</span>
+				</div>
+			</div>
+
+			<audio class="tts-audio" preload="none" src={`/audio/${key}.mp3`} />
+		</div>
+	)
+}
+
+<style>
+	.tts {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin-block: 1rem 1.75rem;
+		padding: 0.6rem 0.85rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.6rem;
+		background: var(--sl-color-black);
+	}
+
+	.tts-play {
+		flex: none;
+		display: grid;
+		place-items: center;
+		width: 2.5rem;
+		height: 2.5rem;
+		border: 0;
+		border-radius: 50%;
+		cursor: pointer;
+		color: var(--sl-color-black);
+		background: var(--sl-color-text-accent);
+		transition: opacity 0.15s ease;
+	}
+	.tts-play:hover {
+		opacity: 0.85;
+	}
+	.tts-play svg {
+		width: 1.15rem;
+		height: 1.15rem;
+		fill: currentColor;
+	}
+	/* Only one of the two glyphs is ever shown. */
+	.tts-icon-pause,
+	.tts[data-playing] .tts-icon-play {
+		display: none;
+	}
+	.tts[data-playing] .tts-icon-pause {
+		display: block;
+	}
+
+	.tts-body {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.tts-scrub {
+		padding-block: 0.4rem;
+		cursor: pointer;
+	}
+	.tts-track {
+		height: 0.25rem;
+		border-radius: 999px;
+		background: var(--sl-color-gray-5);
+		overflow: hidden;
+	}
+	.tts-fill {
+		height: 100%;
+		width: 0;
+		border-radius: 999px;
+		background: var(--sl-color-text-accent);
+	}
+
+	.tts-meta {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		margin-top: 0.15rem;
+		font-size: var(--sl-text-xs);
+		color: var(--sl-color-gray-3);
+	}
+	.tts-controls {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+	.tts-rate {
+		border: 0;
+		padding: 0;
+		font: inherit;
+		color: var(--sl-color-gray-2);
+		background: none;
+		cursor: pointer;
+	}
+	.tts-rate:hover {
+		color: var(--sl-color-text-accent);
+	}
+	.tts-chain {
+		display: flex;
+		align-items: center;
+		gap: 0.3rem;
+		cursor: pointer;
+		user-select: none;
+	}
+	.tts-chain input {
+		accent-color: var(--sl-color-text-accent);
+	}
+
+	@media (max-width: 30rem) {
+		.tts-chain span {
+			display: none;
+		}
+	}
+</style>
+
+<style is:global>
+	/* The highlight the player moves through the page. Deliberately low
+	   contrast — this sits under prose that is already being read, and a
+	   saturated band is exhausting over four hours. */
+	.sl-markdown-content [data-tts] {
+		border-radius: 0.2rem;
+		transition: background-color 0.2s ease;
+	}
+	.sl-markdown-content [data-tts].tts-active {
+		background: color-mix(in srgb, var(--sl-color-text-accent) 18%, transparent);
+	}
+	/* Seeking by clicking a sentence is only offered once audio is loaded. */
+	.tts-seekable .sl-markdown-content [data-tts]:hover {
+		cursor: pointer;
+		background: color-mix(in srgb, var(--sl-color-text-accent) 9%, transparent);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.sl-markdown-content [data-tts] {
+			transition: none;
+		}
+	}
+</style>
+
+<script>
+	interface Timing {
+		duration: number;
+		sentences: Array<{ i: number; start: number; end: number }>;
+	}
+
+	const RATES = [0.9, 1, 1.15, 1.3, 1.5, 1.75];
+
+	function setup(root: HTMLElement) {
+		const key = root.dataset.key!;
+		const next = root.dataset.next || '';
+		const audio = root.querySelector<HTMLAudioElement>('.tts-audio')!;
+		const playButton = root.querySelector<HTMLButtonElement>('.tts-play')!;
+		const rateButton = root.querySelector<HTMLButtonElement>('.tts-rate')!;
+		const chain = root.querySelector<HTMLInputElement>('.tts-chain input')!;
+		const scrub = root.querySelector<HTMLElement>('.tts-scrub')!;
+		const fill = root.querySelector<HTMLElement>('.tts-fill')!;
+		const elapsed = root.querySelector<HTMLElement>('.tts-elapsed')!;
+
+		const posKey = `tts:pos:${key}`;
+		let timing: Timing | null = null;
+		let spans: HTMLElement[] = [];
+		let active = -1;
+		let raf = 0;
+
+		const clock = (s: number) =>
+			`${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+
+		// Restore the saved rate immediately; it applies before any audio loads.
+		const savedRate = Number(localStorage.getItem('tts:rate') ?? '1');
+		audio.playbackRate = RATES.includes(savedRate) ? savedRate : 1;
+		rateButton.textContent = `${audio.playbackRate}×`;
+		chain.checked = localStorage.getItem('tts:chain') !== '0';
+
+		async function loadTiming() {
+			if (timing) return timing;
+			const response = await fetch(`/audio/${key}.json`);
+			if (!response.ok) throw new Error(`no timing for ${key}`);
+			timing = (await response.json()) as Timing;
+			spans = timing.sentences.map(
+				(s) => document.querySelector<HTMLElement>(`[data-tts="${s.i}"]`)!,
+			);
+			document.body.classList.add('tts-seekable');
+			return timing;
+		}
+
+		function highlight(time: number) {
+			if (!timing) return;
+			const list = timing.sentences;
+			// Binary search for the sentence containing `time`.
+			let lo = 0;
+			let hi = list.length - 1;
+			let found = -1;
+			while (lo <= hi) {
+				const mid = (lo + hi) >> 1;
+				if (time < list[mid]!.start) hi = mid - 1;
+				else if (time > list[mid]!.end) lo = mid + 1;
+				else {
+					found = mid;
+					break;
+				}
+			}
+			// Between two sentences: hold the previous one rather than flicker.
+			if (found === -1) found = Math.max(0, hi);
+			if (found === active) return;
+
+			spans[active]?.classList.remove('tts-active');
+			active = found;
+			const span = spans[active];
+			if (!span) return;
+			span.classList.add('tts-active');
+
+			const box = span.getBoundingClientRect();
+			if (box.top < 80 || box.bottom > window.innerHeight - 80) {
+				span.scrollIntoView({ block: 'center', behavior: 'smooth' });
+			}
+		}
+
+		function tick() {
+			fill.style.width = `${(audio.currentTime / (audio.duration || 1)) * 100}%`;
+			elapsed.textContent = clock(audio.currentTime);
+			scrub.setAttribute('aria-valuenow', String(Math.round(audio.currentTime)));
+			highlight(audio.currentTime);
+			raf = requestAnimationFrame(tick);
+		}
+
+		/** `currentTime` is only settable once metadata has arrived. */
+		function ready() {
+			if (audio.readyState >= 1) return Promise.resolve();
+			audio.load();
+			return new Promise<void>((resolve) => {
+				audio.addEventListener('loadedmetadata', () => resolve(), { once: true });
+				audio.addEventListener('error', () => resolve(), { once: true });
+			});
+		}
+
+		async function play() {
+			await loadTiming();
+			await ready();
+			const saved = Number(localStorage.getItem(posKey) ?? '0');
+			// Only resume if the saved position is not effectively the end.
+			if (saved > 1 && audio.currentTime < 1 && saved < (audio.duration || Infinity) - 2) {
+				audio.currentTime = saved;
+			}
+			await audio.play();
+		}
+
+		playButton.addEventListener('click', () => {
+			if (audio.paused) play().catch(() => {});
+			else audio.pause();
+		});
+
+		audio.addEventListener('play', () => {
+			root.dataset.playing = '';
+			cancelAnimationFrame(raf);
+			raf = requestAnimationFrame(tick);
+		});
+
+		audio.addEventListener('pause', () => {
+			delete root.dataset.playing;
+			cancelAnimationFrame(raf);
+			localStorage.setItem(posKey, String(audio.currentTime));
+		});
+
+		audio.addEventListener('ended', () => {
+			localStorage.removeItem(posKey);
+			spans[active]?.classList.remove('tts-active');
+			if (chain.checked && next) {
+				sessionStorage.setItem('tts:autoplay', '1');
+				location.href = next;
+			}
+		});
+
+		// Keep the resume point fresh without writing on every frame.
+		setInterval(() => {
+			if (!audio.paused) localStorage.setItem(posKey, String(audio.currentTime));
+		}, 5000);
+		addEventListener('pagehide', () => {
+			if (audio.currentTime > 0) localStorage.setItem(posKey, String(audio.currentTime));
+		});
+
+		rateButton.addEventListener('click', () => {
+			const rate = RATES[(RATES.indexOf(audio.playbackRate) + 1) % RATES.length]!;
+			audio.playbackRate = rate;
+			rateButton.textContent = `${rate}×`;
+			localStorage.setItem('tts:rate', String(rate));
+		});
+
+		chain.addEventListener('change', () =>
+			localStorage.setItem('tts:chain', chain.checked ? '1' : '0'),
+		);
+
+		const seekTo = (event: PointerEvent) => {
+			const box = scrub.getBoundingClientRect();
+			const ratio = Math.min(1, Math.max(0, (event.clientX - box.left) / box.width));
+			loadTiming()
+				.then(ready)
+				.then(() => {
+					audio.currentTime = ratio * (audio.duration || timing!.duration);
+					highlight(audio.currentTime);
+				})
+				.catch(() => {});
+		};
+		scrub.addEventListener('pointerdown', seekTo);
+		scrub.addEventListener('keydown', (event) => {
+			if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+			event.preventDefault();
+			audio.currentTime += event.key === 'ArrowRight' ? 10 : -10;
+		});
+
+		// Click a sentence to jump to it. Ignored while text is being selected,
+		// so this does not fight with copying a quote.
+		document.querySelector('.sl-markdown-content')?.addEventListener('click', (event) => {
+			if (!timing) return;
+			if (window.getSelection()?.toString()) return;
+			const span = (event.target as HTMLElement).closest<HTMLElement>('[data-tts]');
+			if (!span) return;
+			const entry = timing.sentences.find((s) => String(s.i) === span.dataset.tts);
+			if (!entry) return;
+			ready().then(() => {
+				audio.currentTime = entry.start;
+				highlight(entry.start);
+				if (audio.paused) audio.play().catch(() => {});
+			});
+		});
+
+		// Arriving from a previous page's auto-advance.
+		if (sessionStorage.getItem('tts:autoplay') === '1') {
+			sessionStorage.removeItem('tts:autoplay');
+			localStorage.removeItem(posKey);
+			play().catch(() => {
+				// Autoplay was refused — leave the control ready for a click.
+			});
+		}
+	}
+
+	const mount = () => {
+		const root = document.querySelector<HTMLElement>('[data-tts-player]');
+		if (root && !root.dataset.ready) {
+			root.dataset.ready = '1';
+			setup(root);
+		}
+	};
+
+	mount();
+	document.addEventListener('astro:page-load', mount);
+</script>

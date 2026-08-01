@@ -1,10 +1,18 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import rehypeTts from './src/plugins/rehype-tts.mjs';
+
 
 // https://astro.build/config
 export default defineConfig({
 	site: 'https://zed-rust-oss-for-dummies.vercel.app',
+	markdown: {
+		// Wraps each sentence in a `<span data-tts="n">`. `scripts/narrate.mjs`
+		// reads those spans back out of `dist/`, so `astro build` has to run
+		// before audio can be generated.
+		rehypePlugins: [rehypeTts],
+	},
 	integrations: [
 		starlight({
 			title: 'Zed Rust for Dummies',
@@ -19,6 +27,10 @@ export default defineConfig({
 			],
 			favicon: '/favicon.svg',
 			lastUpdated: true,
+			components: {
+				// Mounts the narration player under the page title.
+				PageTitle: './src/components/PageTitle.astro',
+			},
 			tableOfContents: { minHeadingLevel: 2, maxHeadingLevel: 4 },
 			expressiveCode: {
 				// Vitesse is warm and low-contrast — it stops code blocks from

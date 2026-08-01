@@ -79,6 +79,65 @@ npm run build    # → ./dist
 
 Built with [Astro](https://astro.build) and [Starlight](https://starlight.astro.build).
 
+## Narration
+
+Every page has an audio track, generated offline with
+[Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) (Apache-2.0). It exists to
+reinforce a read and to give your eyes a rest — not as a substitute for reading the
+diff.
+
+```bash
+npm run build      # wraps each sentence in <span data-tts>
+npm run narrate    # synthesises only the pages whose text changed
+npm run build      # publishes the new audio
+```
+
+Two passes, because `narrate` reads the built HTML rather than the markdown source.
+That is deliberate: the highlight spans in the page and the audio segments have to
+agree on where each sentence starts, and deriving both from the same rendered tree
+makes that structural instead of a coincidence between two parsers.
+
+Useful flags:
+
+```bash
+npm run narrate -- --voice bf_emma       # one of 54 voices; default af_heart
+npm run narrate -- --only defending      # just the pages matching a substring
+npm run narrate -- --force               # ignore the content hash
+npm run narrate -- --backend onnx        # offline weights, see below
+```
+
+Voice names are prefixed by accent and gender — `af_*` American female, `am_*`
+American male, `bf_*`/`bm_*` the British pair. Changing the voice re-synthesises
+everything, so it is worth auditioning one page first:
+`npm run narrate -- --only gpui/model --voice af_nova`.
+
+The default backend (`kokoro-js`) downloads ~86 MB of weights from Hugging Face on
+first run. Where that host is unreachable, use `--backend onnx` with the same model
+published on
+[GitHub releases](https://github.com/thewh1teagle/kokoro-onnx/releases/tag/model-files-v1.0):
+
+```bash
+python3 -m venv .venv-tts && ./.venv-tts/bin/pip install kokoro-onnx soundfile numpy
+mkdir -p ~/.cache/kokoro && cd ~/.cache/kokoro
+curl -LO https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.onnx
+curl -LO https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin
+```
+
+### How the code is read aloud
+
+The prose carries roughly one inline `code` span every 23 words, so the engine matters
+less than the normalisation. `src/lib/tts/speech.mjs` turns `&mut Window` into "mutable
+reference to Window" and `window.theme(cx)` into "window dot theme of context" — verbose
+where that clarifies, terse where it would sound absurd (a commit SHA is cut to four
+spelled characters). Fenced blocks are announced, not read: "Rust code block, 12 lines."
+
+If something comes out wrong, add it to the `DICTIONARY` map at the top of that file and
+re-run `narrate`. The generated audio is committed, so a bad pronunciation is a one-line
+fix rather than something every visitor re-derives.
+
+The player itself is `preload="none"` — a visitor who never presses play downloads none
+of it.
+
 ## Related links
 
 | | |
