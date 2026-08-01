@@ -133,13 +133,30 @@ async function main() {
 
 	fs.mkdirSync(WORK, { recursive: true });
 	fs.mkdirSync(OUT, { recursive: true });
+
+	// Synthesis is the slow part — hours for the whole site — so a run that is
+	// interrupted half way must not throw away what it already rendered. Any
+	// page with a WAV and a timing file still in the work directory is handed
+	// straight to the encoder instead of back to the model.
+	const wavDir = path.join(WORK, 'wav');
+	const rendered = (page) =>
+		fs.existsSync(path.join(wavDir, `${page.key}.wav`)) &&
+		fs.existsSync(path.join(wavDir, `${page.key}.timing.json`));
+
+	const todo = stale.filter((page) => !rendered(page));
+	if (todo.length < stale.length) {
+		console.log(`resuming — ${stale.length - todo.length} page(s) already rendered\n`);
+	}
+
 	const jobPath = path.join(WORK, 'job.json');
 	fs.writeFileSync(
 		jobPath,
-		JSON.stringify({ voice: VOICE, outDir: path.join(WORK, 'wav'), pages: stale }, null, '\t'),
+		JSON.stringify({ voice: VOICE, outDir: wavDir, pages: todo }, null, '\t'),
 	);
 
-	if (BACKEND === 'onnx') {
+	if (todo.length === 0) {
+		console.log('Nothing to synthesise; encoding what is already rendered.\n');
+	} else if (BACKEND === 'onnx') {
 		await run(path.join(root, '.venv-tts/bin/python'), [
 			path.join(root, 'scripts/kokoro_synth.py'),
 			jobPath,
