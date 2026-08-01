@@ -26,3 +26,6 @@ pnpm-debug.log*
 .tts/
 # local Python venv for the offline Kokoro backend
 .venv-tts/
+# Python bytecode from the offline narration backend
+__pycache__/
+*.pyc
