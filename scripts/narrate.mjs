@@ -138,10 +138,22 @@ async function main() {
 	// interrupted half way must not throw away what it already rendered. Any
 	// page with a WAV and a timing file still in the work directory is handed
 	// straight to the encoder instead of back to the model.
+	//
+	// The timing file records the hash the audio was rendered from: existence
+	// alone is not enough, or editing a page and re-running would re-encode the
+	// previous take and quietly publish audio that no longer matches the text.
 	const wavDir = path.join(WORK, 'wav');
-	const rendered = (page) =>
-		fs.existsSync(path.join(wavDir, `${page.key}.wav`)) &&
-		fs.existsSync(path.join(wavDir, `${page.key}.timing.json`));
+	const rendered = (page) => {
+		const timing = path.join(wavDir, `${page.key}.timing.json`);
+		if (!fs.existsSync(path.join(wavDir, `${page.key}.wav`)) || !fs.existsSync(timing)) {
+			return false;
+		}
+		try {
+			return JSON.parse(fs.readFileSync(timing, 'utf8')).hash === hashOf(page);
+		} catch {
+			return false;
+		}
+	};
 
 	const todo = stale.filter((page) => !rendered(page));
 	if (todo.length < stale.length) {
@@ -151,7 +163,15 @@ async function main() {
 	const jobPath = path.join(WORK, 'job.json');
 	fs.writeFileSync(
 		jobPath,
-		JSON.stringify({ voice: VOICE, outDir: wavDir, pages: todo }, null, '\t'),
+		JSON.stringify(
+			{
+				voice: VOICE,
+				outDir: wavDir,
+				pages: todo.map((page) => ({ ...page, hash: hashOf(page) })),
+			},
+			null,
+			'\t',
+		),
 	);
 
 	if (todo.length === 0) {

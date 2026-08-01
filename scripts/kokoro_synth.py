@@ -91,8 +91,16 @@ def synth_page(args):
     dest = Path(out_dir) / f"{key}.wav"
     dest.parent.mkdir(parents=True, exist_ok=True)
     sf.write(dest, audio, rate)
+    # The hash travels with the audio so a resumed run can tell a finished page
+    # from one whose text has since changed.
     (Path(out_dir) / f"{key}.timing.json").write_text(
-        json.dumps({"duration": round(len(audio) / rate, 3), "sentences": timing})
+        json.dumps(
+            {
+                "hash": page.get("hash"),
+                "duration": round(len(audio) / rate, 3),
+                "sentences": timing,
+            }
+        )
     )
     return key, len(audio) / rate
 

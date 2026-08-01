@@ -94,9 +94,15 @@ async function main() {
 
 		const dest = path.join(job.outDir, `${page.key}.wav`);
 		writeWav(dest, merged, rate);
+		// The hash travels with the audio so a resumed run can tell a finished
+		// page from one whose text has since changed.
 		fs.writeFileSync(
 			path.join(job.outDir, `${page.key}.timing.json`),
-			JSON.stringify({ duration: Number((total / rate).toFixed(3)), sentences: timing }),
+			JSON.stringify({
+				hash: page.hash,
+				duration: Number((total / rate).toFixed(3)),
+				sentences: timing,
+			}),
 		);
 
 		totalSeconds += total / rate;
