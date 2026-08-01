@@ -19,6 +19,24 @@ export const sidebar = [
 		],
 	},
 	{
+		label: 'Rust from zero — 12 hours',
+		items: [
+			{ label: 'How this crash course works', slug: 'crash/how-to-use' },
+			{ label: '1. Toolchain and hello world', slug: 'crash/01-setup' },
+			{ label: '2. Values, functions, match', slug: 'crash/02-values' },
+			{ label: '3. Ownership', slug: 'crash/03-ownership' },
+			{ label: '4. Borrowing and &mut', slug: 'crash/04-borrowing' },
+			{ label: '5. Structs, enums, Option', slug: 'crash/05-structs-enums' },
+			{ label: '6. Result and ?', slug: 'crash/06-errors' },
+			{ label: '7. Collections and iterators', slug: 'crash/07-collections' },
+			{ label: '8. Traits and generics', slug: 'crash/08-traits' },
+			{ label: '9. Lifetimes', slug: 'crash/09-lifetimes' },
+			{ label: '10. Box, Rc, Arc', slug: 'crash/10-smart-pointers' },
+			{ label: '11. Modules, crates, tests', slug: 'crash/11-modules-tests' },
+			{ label: '12. Capstone: the PR in miniature', slug: 'crash/12-capstone' },
+		],
+	},
+	{
 		label: 'Rust, for a TypeScript brain',
 		items: [
 			{ label: 'How to use this section', slug: 'rust/how-to-use' },

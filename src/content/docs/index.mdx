@@ -81,15 +81,26 @@ That trade — deleting the old accessor so the compiler enumerates all 1,800 ca
 sites, instead of hand-auditing them — is the whole argument of the PR, and it is
 the thing you need to be able to defend without notes.
 
+## Never written Rust?
+
+Start with **[Rust from zero](/crash/how-to-use/)** — twelve focused hours at a
+keyboard, with no Zed anywhere in it. Toolchain, ownership, borrowing, traits,
+lifetimes, `Arc`, and a capstone that rebuilds this PR's architecture in about
+150 lines you write yourself.
+
+Every snippet in it is compiled by a script in the repo, so nothing you type there
+is going to mysteriously not work.
+
 ## Suggested reading order
 
 1. **[Read this first](/start/read-this-first/)** — the situation, honestly assessed.
-2. **[Rust, for a TypeScript brain](/rust/how-to-use/)** — skip if you already have it.
-3. **[GPUI, in plain English](/gpui/model/)** — the framework's four nouns.
-4. **[The architecture](/architecture/overview/)** — the three pieces and seven decisions.
-5. **[The seven rewrite shapes](/migration/shapes/)** — what reviewers will probe.
-6. **[Known gaps](/gaps/the-honest-list/)** — say these before anyone finds them.
-7. **[Defending it](/defending/objections/)** — the actual conversation.
+2. **[Rust from zero](/crash/how-to-use/)** — twelve hands-on hours, if you need them.
+3. **[Rust, for a TypeScript brain](/rust/how-to-use/)** — the same concepts, anchored to the diff.
+4. **[GPUI, in plain English](/gpui/model/)** — the framework's four nouns.
+5. **[The architecture](/architecture/overview/)** — the three pieces and seven decisions.
+6. **[The seven rewrite shapes](/migration/shapes/)** — what reviewers will probe.
+7. **[Known gaps](/gaps/the-honest-list/)** — say these before anyone finds them.
+8. **[Defending it](/defending/objections/)** — the actual conversation.
 
 ## Or listen to it
 
@@ -97,7 +108,7 @@ Every page has a narrated track with the sentence you're hearing highlighted as 
 plays — useful for a second pass, or for resting your eyes on a first one.
 
 For listening away from the screen, the whole guide is a podcast feed in reading
-order: **[`/podcast.xml`](/podcast.xml)** — 35 chapters, about four hours. Paste
+order: **[`/podcast.xml`](/podcast.xml)** — 48 chapters, about five hours. Paste
 that URL into any podcast app.
 
 The voice is synthetic ([Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M),

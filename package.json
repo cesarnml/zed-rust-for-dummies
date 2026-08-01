@@ -9,7 +9,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "narrate": "node scripts/narrate.mjs",
-    "test": "node --test 'src/lib/tts/*.test.mjs'"
+    "test": "node --test 'src/lib/tts/*.test.mjs' && node scripts/check-rust-examples.mjs"
   },
   "dependencies": {
     "@astrojs/starlight": "^0.41.5",

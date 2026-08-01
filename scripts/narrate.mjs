@@ -26,6 +26,7 @@ import { visit } from 'unist-util-visit';
 import ffmpeg from 'ffmpeg-static';
 import { speechOf } from '../src/lib/tts/speech.mjs';
 import { tidyForSpeech } from '../src/lib/tts/sentences.mjs';
+import { readingOrder } from '../src/sidebar.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const DIST = path.join(root, 'dist');
@@ -44,6 +45,8 @@ const BACKEND = flag('backend', 'kokoro-js');
 const ONLY = flag('only', null);
 const JOBS = Number(flag('jobs', '4'));
 const FORCE = has('force');
+
+const narratable = new Set(readingOrder.map((page) => page.slug));
 
 /** Every built page, as `{ key, sentences }`. */
 function collectPages() {
@@ -79,6 +82,11 @@ function collectPages() {
 			return { key, sentences };
 		})
 		.filter((p) => p.sentences.length > 0)
+		// The reading order decides what gets a track. It is also what the
+		// podcast feed enumerates, and the splash page is not in it — narrating
+		// a page with no player and no feed entry only produces audio nobody
+		// can reach.
+		.filter((p) => narratable.has(p.key))
 		.filter((p) => !ONLY || p.key.includes(ONLY));
 }
 
