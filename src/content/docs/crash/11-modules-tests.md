@@ -265,4 +265,5 @@ use them constantly and will almost certainly never write one.
 ## What you should be able to do now
 
 Lay out a multi-file crate, write and run tests, and read a `macro_rules!` block
-without panic. One hour left, and it is the one that ties the course to the PR.
+without panic. Next is stored callbacks, which is the last new Rust in the
+course, and then the three hours that tie it to the PR.

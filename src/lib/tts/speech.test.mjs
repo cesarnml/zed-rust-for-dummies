@@ -126,3 +126,29 @@ test('tidyForSpeech: closes the gap left by expanded inline code', () => {
 	assert.equal(tidyForSpeech('a ( configured theme ) here'), 'a (configured theme) here');
 	assert.equal(tidyForSpeech('spaced   out\ntext'), 'spaced out text');
 });
+
+test('tidyForSpeech: respells the words the synthesiser says wrong', () => {
+	assert.equal(tidyForSpeech('the turbofish of T'), 'the turbo fish of T');
+	assert.equal(tidyForSpeech('Turbofish syntax'), 'Turbo fish syntax');
+});
+
+test('tidyForSpeech: `lives` keeps its sense — locative vs durational', () => {
+	// Getting this backwards renders the definition of `'static` as "resides
+	// forever", on the pages where that distinction is the whole lesson.
+	assert.equal(tidyForSpeech('the theme lives in the app'), 'the theme resides in the app');
+	assert.equal(tidyForSpeech('the closure lives inside'), 'the closure resides inside');
+	assert.equal(tidyForSpeech('where the theme actually lives'), 'where the theme actually resides');
+
+	assert.equal(tidyForSpeech('a reference that lives forever'), 'a reference that lasts forever');
+	assert.equal(tidyForSpeech('the output lives as long as both'), 'the output lasts as long as both');
+	assert.equal(tidyForSpeech('it lives for the whole program'), 'it lasts for the whole program');
+	assert.equal(tidyForSpeech('not how long the reference lives, but'), 'not how long the reference lasts, but');
+	assert.equal(tidyForSpeech('Lives forever'), 'Lasts forever');
+});
+
+test('tidyForSpeech: respelling is whole-word only', () => {
+	// `lifetimes` and `live` must not be caught by the `lives` rules, and a
+	// respelled word inside a larger identifier would be worse than the bug.
+	assert.equal(tidyForSpeech('lifetimes and live reload'), 'lifetimes and live reload');
+	assert.equal(tidyForSpeech('turbofishing'), 'turbofishing');
+});

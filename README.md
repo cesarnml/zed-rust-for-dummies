@@ -81,7 +81,7 @@ Built with [Astro](https://astro.build) and [Starlight](https://starlight.astro.
 
 ## The crash course
 
-`src/content/docs/crash/` is a twelve-hour, hands-on introduction to Rust with no Zed
+`src/content/docs/crash/` is a sixteen-hour, hands-on introduction to Rust with no Zed
 in it at all — toolchain through lifetimes and `Arc`, biased toward the concepts this
 diff leans on, ending in a capstone that rebuilds the PR's architecture (a global
 theme, a per-window override map, a trait split in two, and the lifetime override that

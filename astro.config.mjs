@@ -8,6 +8,12 @@ import { sidebar } from './src/sidebar.mjs';
 // https://astro.build/config
 export default defineConfig({
 	site: 'https://zed-rust-oss-for-dummies.vercel.app',
+	// The capstone moved from hour 12 to hour 13 when stored callbacks were
+	// added ahead of it. The old URL was published and narrated, so it redirects
+	// rather than 404s.
+	redirects: {
+		'/crash/12-capstone': '/crash/13-capstone/',
+	},
 	markdown: {
 		// Wraps each sentence in a `<span data-tts="n">`. `scripts/narrate.mjs`
 		// reads those spans back out of `dist/`, so `astro build` has to run

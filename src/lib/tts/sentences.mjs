@@ -86,13 +86,59 @@ export function splitSentences(text) {
 }
 
 /**
- * Normalise text for the synthesiser: collapse whitespace, and strip the
- * markdown residue that survives into rendered text nodes.
+ * Words the synthesiser says wrong, respelled so that it doesn't.
+ *
+ * This layer is audio-only — `tidyForSpeech` feeds the generator and never
+ * touches the rendered page — so an entry here changes what you hear and
+ * nothing you read.
+ *
+ * Add to this map when you hear something wrong. Each entry changes the speech
+ * text, which is what the narration hash is computed from, so the next
+ * `npm run narrate` re-synthesises exactly the pages containing that word.
+ */
+const PRONUNCIATIONS = [
+	// Read as "turb-of-fish", every time. The space is the whole fix.
+	[/\bturbofish\b/gi, 'turbo fish'],
+
+	// `lives` is a homograph and the synthesiser picks the wrong one: it says
+	// the plural of "life" where the corpus always means the verb. No English
+	// respelling of the verb is unambiguous to a phonemiser, so these
+	// substitute synonyms — but the corpus uses the verb in two senses and one
+	// synonym cannot cover both.
+	//
+	//   durational  "lives forever", "lives as long as both inputs"  -> lasts
+	//   locative    "lives in an app global"                         -> resides
+	//
+	// Getting this backwards would render the definition of `'static` as
+	// "resides forever", on the pages where the distinction *is* the lesson.
+	// Durational patterns are therefore matched first and the locative rule
+	// takes what is left.
+	[/\bhow long\b([^.]*?)\blives\b/gi, 'how long$1lasts'],
+	[/\blives\s+(forever|for\b|as long as)/gi, 'lasts $1'],
+	[/\blives\b/gi, 'resides'],
+];
+
+/** Apply {@link PRONUNCIATIONS} in order, preserving a leading capital. */
+function respell(text) {
+	let out = text;
+	for (const [pattern, said] of PRONUNCIATIONS) {
+		out = out.replace(pattern, (match, ...groups) => {
+			const expanded = said.replace(/\$(\d)/g, (_m, n) => groups[n - 1] ?? '');
+			return /^[A-Z]/.test(match) ? expanded[0].toUpperCase() + expanded.slice(1) : expanded;
+		});
+	}
+	return out;
+}
+
+/**
+ * Normalise text for the synthesiser: collapse whitespace, strip the markdown
+ * residue that survives into rendered text nodes, and respell the words the
+ * synthesiser gets wrong.
  *
  * @param {string} text
  */
 export function tidyForSpeech(text) {
-	return text
+	return respell(text)
 		.replace(/ /g, ' ')
 		.replace(/[‘’]/g, "'")
 		.replace(/[“”]/g, '"')

@@ -264,4 +264,5 @@ possibility of writer starvation under constant reads.
 ## What you should be able to do now
 
 Explain why `Arc::clone` is cheap, when you need `Arc<Mutex<T>>`, and what `Send`
-means on a closure bound. Two hours left: packaging, then the capstone.
+means on a closure bound. Six hours left: packaging, stored callbacks (a long
+one), the capstone, the real diff, and the exam.

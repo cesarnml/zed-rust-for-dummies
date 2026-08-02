@@ -19,7 +19,7 @@ export const sidebar = [
 		],
 	},
 	{
-		label: 'Rust from zero — 12 hours',
+		label: 'Rust from zero — 16 hours',
 		items: [
 			{ label: 'How this crash course works', slug: 'crash/how-to-use' },
 			{ label: '1. Toolchain and hello world', slug: 'crash/01-setup' },
@@ -33,7 +33,10 @@ export const sidebar = [
 			{ label: '9. Lifetimes', slug: 'crash/09-lifetimes' },
 			{ label: '10. Box, Rc, Arc', slug: 'crash/10-smart-pointers' },
 			{ label: '11. Modules, crates, tests', slug: 'crash/11-modules-tests' },
-			{ label: '12. Capstone: the PR in miniature', slug: 'crash/12-capstone' },
+			{ label: "12. Storing closures, 'static, Send", slug: 'crash/12-closures' },
+			{ label: '13. Capstone: the PR in miniature', slug: 'crash/13-capstone' },
+			{ label: '14. Reading the real diff', slug: 'crash/14-reading-the-diff' },
+			{ label: '15. The exam', slug: 'crash/15-exam' },
 		],
 	},
 	{
