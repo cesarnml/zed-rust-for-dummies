@@ -82,6 +82,9 @@ const minutes = Math.round(duration / 60);
 						<button class="tts-rate" type="button" aria-label="Playback speed">
 							1×
 						</button>
+						<button class="tts-reset" type="button" aria-label="Reset to start">
+							reset
+						</button>
 						<label class="tts-chain">
 							<input type="checkbox" checked />
 							<span>keep playing</span>
@@ -184,6 +187,17 @@ const minutes = Math.round(duration / 60);
 	.tts-rate:hover {
 		color: var(--sl-color-text-accent);
 	}
+	.tts-reset {
+		border: 0;
+		padding: 0;
+		font: inherit;
+		color: var(--sl-color-gray-2);
+		background: none;
+		cursor: pointer;
+	}
+	.tts-reset:hover {
+		color: var(--sl-color-text-accent);
+	}
 	.tts-chain {
 		display: flex;
 		align-items: center;
@@ -240,6 +254,7 @@ const minutes = Math.round(duration / 60);
 		const audio = root.querySelector<HTMLAudioElement>('.tts-audio')!;
 		const playButton = root.querySelector<HTMLButtonElement>('.tts-play')!;
 		const rateButton = root.querySelector<HTMLButtonElement>('.tts-rate')!;
+		const resetButton = root.querySelector<HTMLButtonElement>('.tts-reset')!;
 		const chain = root.querySelector<HTMLInputElement>('.tts-chain input')!;
 		const scrub = root.querySelector<HTMLElement>('.tts-scrub')!;
 		const fill = root.querySelector<HTMLElement>('.tts-fill')!;
@@ -250,6 +265,13 @@ const minutes = Math.round(duration / 60);
 		let spans: HTMLElement[] = [];
 		let active = -1;
 		let raf = 0;
+		// Bumped by reset() to invalidate any in-flight async seek (scrub drag,
+		// sentence click) that might otherwise land after the reset and silently
+		// resurrect a position.
+		let opGen = 0;
+		// Set for the duration of reset()'s own `pause()` call, so the `pause`
+		// listener below doesn't re-save the position it just cleared.
+		let suppressSave = false;
 
 		const clock = (s: number) =>
 			`${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
@@ -323,8 +345,10 @@ const minutes = Math.round(duration / 60);
 		}
 
 		async function play() {
+			const gen = opGen;
 			await loadTiming();
 			await ready();
+			if (gen !== opGen) return; // reset happened while this was in flight
 			const saved = Number(localStorage.getItem(posKey) ?? '0');
 			// Only resume if the saved position is not effectively the end.
 			if (saved > 1 && audio.currentTime < 1 && saved < (audio.duration || Infinity) - 2) {
@@ -347,7 +371,8 @@ const minutes = Math.round(duration / 60);
 		audio.addEventListener('pause', () => {
 			delete root.dataset.playing;
 			cancelAnimationFrame(raf);
-			localStorage.setItem(posKey, String(audio.currentTime));
+			if (suppressSave) suppressSave = false;
+			else localStorage.setItem(posKey, String(audio.currentTime));
 		});
 
 		audio.addEventListener('ended', () => {
@@ -374,16 +399,35 @@ const minutes = Math.round(duration / 60);
 			localStorage.setItem('tts:rate', String(rate));
 		});
 
+		resetButton.addEventListener('click', () => {
+			opGen++; // invalidate any pending seekTo()/sentence-click resolution
+			// audio.pause() only fires a `pause` event (and thus only needs
+			// suppressing) if playback was actually in progress.
+			if (!audio.paused) suppressSave = true;
+			audio.pause();
+			delete root.dataset.playing; // pause event is async; update the icon now
+			cancelAnimationFrame(raf);
+			if (audio.readyState >= 1) audio.currentTime = 0;
+			localStorage.removeItem(posKey);
+			fill.style.width = '0%';
+			elapsed.textContent = '0:00';
+			scrub.setAttribute('aria-valuenow', '0');
+			spans[active]?.classList.remove('tts-active');
+			active = -1;
+		});
+
 		chain.addEventListener('change', () =>
 			localStorage.setItem('tts:chain', chain.checked ? '1' : '0'),
 		);
 
 		const seekTo = (event: PointerEvent) => {
+			const gen = opGen;
 			const box = scrub.getBoundingClientRect();
 			const ratio = Math.min(1, Math.max(0, (event.clientX - box.left) / box.width));
 			loadTiming()
 				.then(ready)
 				.then(() => {
+					if (gen !== opGen) return; // reset happened while this was in flight
 					audio.currentTime = ratio * (audio.duration || timing!.duration);
 					highlight(audio.currentTime);
 				})
@@ -405,7 +449,9 @@ const minutes = Math.round(duration / 60);
 			if (!span) return;
 			const entry = timing.sentences.find((s) => String(s.i) === span.dataset.tts);
 			if (!entry) return;
+			const gen = opGen;
 			ready().then(() => {
+				if (gen !== opGen) return; // reset happened while this was in flight
 				audio.currentTime = entry.start;
 				highlight(entry.start);
 				if (audio.paused) audio.play().catch(() => {});
