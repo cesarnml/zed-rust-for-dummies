@@ -49,7 +49,7 @@ const minutes = Math.round(duration / 60);
 {
 	hasAudio && (
 		<div class="tts not-content" data-tts-player data-key={key} data-next={next ?? ''}>
-			<button class="tts-play" type="button" aria-label="Play narration">
+			<button class="tts-play" type="button" aria-label="Play narration" title="Play/pause (Alt+P)">
 				<svg class="tts-icon-play" viewBox="0 0 24 24" aria-hidden="true">
 					<path d="M8 5v14l11-7z" />
 				</svg>
@@ -98,7 +98,7 @@ const minutes = Math.round(duration / 60);
 			<audio class="tts-audio" preload="none" src={`/audio/${key}.mp3`} />
 
 			<div class="tts-mini" aria-hidden="true">
-				<button class="tts-mini-play" type="button" aria-label="Play narration">
+				<button class="tts-mini-play" type="button" aria-label="Play narration" title="Play/pause (Alt+P)">
 					<svg class="tts-icon-play" viewBox="0 0 24 24" aria-hidden="true">
 						<path d="M8 5v14l11-7z" />
 					</svg>
@@ -671,4 +671,24 @@ const minutes = Math.round(duration / 60);
 
 	mount();
 	document.addEventListener('astro:page-load', mount);
+
+	// Global play/pause shortcut, in the same spirit as Starlight's own Cmd+K
+	// for search: works from anywhere on the page, not just while the player
+	// has focus. Alt+P rather than a Cmd/Ctrl+Shift combo — Firefox binds
+	// Cmd/Ctrl+Shift+P to "New Private Window" at the browser-chrome level,
+	// which a page's `keydown` listener cannot override. Registered once at
+	// module scope (not in setup(), which reruns per navigation) since it
+	// only ever needs to find whichever player is currently mounted.
+	document.addEventListener('keydown', (event) => {
+		if (event.key.toLowerCase() !== 'p' || !event.altKey) return;
+		// Don't hijack the shortcut while the visitor is typing.
+		const target = event.target as HTMLElement | null;
+		if (target?.closest('input, textarea, [contenteditable]')) return;
+		const playButton = document.querySelector<HTMLButtonElement>(
+			'[data-tts-player] .tts-play',
+		);
+		if (!playButton) return;
+		event.preventDefault();
+		playButton.click();
+	});
 </script>
