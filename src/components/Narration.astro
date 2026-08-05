@@ -178,6 +178,15 @@ const minutes = Math.round(duration / 60);
 	.tts[data-playing] .tts-icon-pause {
 		display: block;
 	}
+	/* `.tts-mini` is moved to <body> at runtime (see the script below), so it's
+	   no longer a DOM descendant of `.tts` and the rules above don't reach its
+	   icons — toggled separately, off `.tts-mini`'s own `data-playing`. */
+	.tts-mini[data-playing] .tts-icon-play {
+		display: none;
+	}
+	.tts-mini[data-playing] .tts-icon-pause {
+		display: block;
+	}
 
 	.tts-body {
 		flex: 1;
@@ -513,12 +522,14 @@ const minutes = Math.round(duration / 60);
 
 		audio.addEventListener('play', () => {
 			root.dataset.playing = '';
+			mini.dataset.playing = '';
 			cancelAnimationFrame(raf);
 			raf = requestAnimationFrame(tick);
 		});
 
 		audio.addEventListener('pause', () => {
 			delete root.dataset.playing;
+			delete mini.dataset.playing;
 			cancelAnimationFrame(raf);
 			if (suppressSave) suppressSave = false;
 			else localStorage.setItem(posKey, String(audio.currentTime));
@@ -556,6 +567,7 @@ const minutes = Math.round(duration / 60);
 			if (!audio.paused) suppressSave = true;
 			audio.pause();
 			delete root.dataset.playing; // pause event is async; update the icon now
+			delete mini.dataset.playing;
 			cancelAnimationFrame(raf);
 			if (audio.readyState >= 1) audio.currentTime = 0;
 			localStorage.removeItem(posKey);
