@@ -49,7 +49,7 @@ const minutes = Math.round(duration / 60);
 {
 	hasAudio && (
 		<div class="tts not-content" data-tts-player data-key={key} data-next={next ?? ''}>
-			<button class="tts-play" type="button" aria-label="Play narration" title="Play/pause (Alt+P)">
+			<button class="tts-play" type="button" aria-label="Play narration" title="Play/pause (Alt/Option+P)">
 				<svg class="tts-icon-play" viewBox="0 0 24 24" aria-hidden="true">
 					<path d="M8 5v14l11-7z" />
 				</svg>
@@ -98,7 +98,7 @@ const minutes = Math.round(duration / 60);
 			<audio class="tts-audio" preload="none" src={`/audio/${key}.mp3`} />
 
 			<div class="tts-mini" aria-hidden="true">
-				<button class="tts-mini-play" type="button" aria-label="Play narration" title="Play/pause (Alt+P)">
+				<button class="tts-mini-play" type="button" aria-label="Play narration" title="Play/pause (Alt/Option+P)">
 					<svg class="tts-icon-play" viewBox="0 0 24 24" aria-hidden="true">
 						<path d="M8 5v14l11-7z" />
 					</svg>
