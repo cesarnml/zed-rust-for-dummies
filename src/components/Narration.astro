@@ -679,8 +679,12 @@ const minutes = Math.round(duration / 60);
 	// which a page's `keydown` listener cannot override. Registered once at
 	// module scope (not in setup(), which reruns per navigation) since it
 	// only ever needs to find whichever player is currently mounted.
+	//
+	// `event.code` rather than `event.key`: on a Mac, Option+P composes to
+	// "π" (event.key), not "p" — event.code reports the physical key ("KeyP")
+	// regardless of what modifier keys turn it into.
 	document.addEventListener('keydown', (event) => {
-		if (event.key.toLowerCase() !== 'p' || !event.altKey) return;
+		if (event.code !== 'KeyP' || !event.altKey) return;
 		// Don't hijack the shortcut while the visitor is typing.
 		const target = event.target as HTMLElement | null;
 		if (target?.closest('input, textarea, [contenteditable]')) return;
