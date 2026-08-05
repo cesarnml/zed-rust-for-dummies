@@ -83,7 +83,9 @@ const minutes = Math.round(duration / 60);
 							1×
 						</button>
 						<button class="tts-reset" type="button" aria-label="Reset to start">
-							reset
+							<svg class="tts-icon-reset" viewBox="0 0 24 24" aria-hidden="true">
+								<path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" />
+							</svg>
 						</button>
 						<label class="tts-chain">
 							<input type="checkbox" checked />
@@ -94,6 +96,43 @@ const minutes = Math.round(duration / 60);
 			</div>
 
 			<audio class="tts-audio" preload="none" src={`/audio/${key}.mp3`} />
+
+			<div class="tts-mini" aria-hidden="true">
+				<button class="tts-mini-play" type="button" aria-label="Play narration">
+					<svg class="tts-icon-play" viewBox="0 0 24 24" aria-hidden="true">
+						<path d="M8 5v14l11-7z" />
+					</svg>
+					<svg class="tts-icon-pause" viewBox="0 0 24 24" aria-hidden="true">
+						<path d="M6 5h4v14H6zM14 5h4v14h-4z" />
+					</svg>
+				</button>
+				<div
+					class="tts-mini-scrub tts-scrub"
+					role="slider"
+					tabindex="0"
+					aria-label="Seek"
+					aria-valuemin="0"
+					aria-valuemax={Math.round(duration)}
+					aria-valuenow="0"
+				>
+					<div class="tts-track">
+						<div class="tts-mini-fill tts-fill" />
+					</div>
+				</div>
+				<span class="tts-mini-time">
+					<span class="tts-mini-elapsed">0:00</span>
+					<span class="tts-sep"> / </span>
+					<span class="tts-total">{minutes} min</span>
+				</span>
+				<button class="tts-mini-rate tts-rate" type="button" aria-label="Playback speed">
+					1×
+				</button>
+				<button class="tts-mini-reset" type="button" aria-label="Reset to start">
+					<svg class="tts-icon-reset" viewBox="0 0 24 24" aria-hidden="true">
+						<path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" />
+					</svg>
+				</button>
+			</div>
 		</div>
 	)
 }
@@ -188,6 +227,8 @@ const minutes = Math.round(duration / 60);
 		color: var(--sl-color-text-accent);
 	}
 	.tts-reset {
+		display: grid;
+		place-items: center;
 		border: 0;
 		padding: 0;
 		font: inherit;
@@ -197,6 +238,11 @@ const minutes = Math.round(duration / 60);
 	}
 	.tts-reset:hover {
 		color: var(--sl-color-text-accent);
+	}
+	.tts-icon-reset {
+		width: 0.95rem;
+		height: 0.95rem;
+		fill: currentColor;
 	}
 	.tts-chain {
 		display: flex;
@@ -211,6 +257,73 @@ const minutes = Math.round(duration / 60);
 
 	@media (max-width: 30rem) {
 		.tts-chain span {
+			display: none;
+		}
+	}
+
+	/* The mini-player: a compact stand-in shown once the full player has
+	   scrolled up under the sticky navbar, so playback controls stay
+	   reachable without the section title (already visible, highlighted, in
+	   the sidebar) taking up width. Hidden by default; JS toggles
+	   `data-visible` once the boundary below the full player passes under
+	   the navbar. */
+	.tts-mini {
+		display: none;
+		position: fixed;
+		top: var(--sl-nav-height);
+		left: 0;
+		right: 0;
+		z-index: 10;
+		align-items: center;
+		gap: 0.6rem;
+		padding: 0.35rem 1rem;
+		border-bottom: 1px solid var(--sl-color-gray-5);
+		background: var(--sl-color-black);
+	}
+	.tts-mini[data-visible] {
+		display: flex;
+	}
+	.tts-mini-play {
+		flex: none;
+		display: grid;
+		place-items: center;
+		width: 1.75rem;
+		height: 1.75rem;
+		border: 0;
+		border-radius: 50%;
+		cursor: pointer;
+		color: var(--sl-color-black);
+		background: var(--sl-color-text-accent);
+	}
+	.tts-mini-play svg {
+		width: 0.85rem;
+		height: 0.85rem;
+		fill: currentColor;
+	}
+	.tts-mini-scrub {
+		flex: 1;
+		min-width: 0;
+		padding-block: 0.4rem;
+		cursor: pointer;
+	}
+	.tts-mini-time {
+		flex: none;
+		font-size: var(--sl-text-xs);
+		color: var(--sl-color-gray-3);
+		white-space: nowrap;
+	}
+	.tts-mini-rate,
+	.tts-mini-reset {
+		flex: none;
+	}
+	.tts-mini-reset {
+		display: grid;
+		place-items: center;
+	}
+
+	@media (max-width: 30rem) {
+		.tts-mini-time .tts-total,
+		.tts-mini-time .tts-sep {
 			display: none;
 		}
 	}
@@ -260,6 +373,30 @@ const minutes = Math.round(duration / 60);
 		const fill = root.querySelector<HTMLElement>('.tts-fill')!;
 		const elapsed = root.querySelector<HTMLElement>('.tts-elapsed')!;
 
+		// The mini-player: a compact mirror of the controls above, shown once
+		// the full player scrolls up under the sticky navbar. It has no state
+		// of its own — every control just proxies the equivalent full-player
+		// control, so there is exactly one source of truth for playback.
+		const mini = root.querySelector<HTMLElement>('.tts-mini')!;
+		// `position: fixed` only escapes the page layout if nothing between
+		// here and <body> establishes its own containing block (a `transform`
+		// or similar). Starlight's content pane does, so move the mini-player
+		// out to <body> rather than depend on that never changing. Starlight's
+		// client-side routing means `mount()` can run again without a full
+		// document reload, so drop any mini-player stranded there by a
+		// previous page before adding this one.
+		document.querySelectorAll('body > .tts-mini').forEach((stray) => stray.remove());
+		document.body.appendChild(mini);
+		// Queried from `mini`, not `root`: `mini` no longer lives under `root`
+		// after the move above, so `root.querySelector('.tts-mini-*')` would
+		// come back null.
+		const miniPlayButton = mini.querySelector<HTMLButtonElement>('.tts-mini-play')!;
+		const miniRateButton = mini.querySelector<HTMLButtonElement>('.tts-mini-rate')!;
+		const miniResetButton = mini.querySelector<HTMLButtonElement>('.tts-mini-reset')!;
+		const miniScrub = mini.querySelector<HTMLElement>('.tts-mini-scrub')!;
+		const miniFill = mini.querySelector<HTMLElement>('.tts-mini-fill')!;
+		const miniElapsed = mini.querySelector<HTMLElement>('.tts-mini-elapsed')!;
+
 		const posKey = `tts:pos:${key}`;
 		let timing: Timing | null = null;
 		let spans: HTMLElement[] = [];
@@ -280,6 +417,7 @@ const minutes = Math.round(duration / 60);
 		const savedRate = Number(localStorage.getItem('tts:rate') ?? '1');
 		audio.playbackRate = RATES.includes(savedRate) ? savedRate : 1;
 		rateButton.textContent = `${audio.playbackRate}×`;
+		miniRateButton.textContent = `${audio.playbackRate}×`;
 		chain.checked = localStorage.getItem('tts:chain') !== '0';
 
 		async function loadTiming() {
@@ -327,9 +465,15 @@ const minutes = Math.round(duration / 60);
 		}
 
 		function tick() {
-			fill.style.width = `${(audio.currentTime / (audio.duration || 1)) * 100}%`;
-			elapsed.textContent = clock(audio.currentTime);
-			scrub.setAttribute('aria-valuenow', String(Math.round(audio.currentTime)));
+			const percent = `${(audio.currentTime / (audio.duration || 1)) * 100}%`;
+			const time = clock(audio.currentTime);
+			const rounded = String(Math.round(audio.currentTime));
+			fill.style.width = percent;
+			elapsed.textContent = time;
+			scrub.setAttribute('aria-valuenow', rounded);
+			miniFill.style.width = percent;
+			miniElapsed.textContent = time;
+			miniScrub.setAttribute('aria-valuenow', rounded);
 			highlight(audio.currentTime);
 			raf = requestAnimationFrame(tick);
 		}
@@ -361,6 +505,11 @@ const minutes = Math.round(duration / 60);
 			if (audio.paused) play().catch(() => {});
 			else audio.pause();
 		});
+		// The mini-player has no state of its own; every control proxies the
+		// equivalent full-player control.
+		miniPlayButton.addEventListener('click', () => playButton.click());
+		miniRateButton.addEventListener('click', () => rateButton.click());
+		miniResetButton.addEventListener('click', () => resetButton.click());
 
 		audio.addEventListener('play', () => {
 			root.dataset.playing = '';
@@ -396,6 +545,7 @@ const minutes = Math.round(duration / 60);
 			const rate = RATES[(RATES.indexOf(audio.playbackRate) + 1) % RATES.length]!;
 			audio.playbackRate = rate;
 			rateButton.textContent = `${rate}×`;
+			miniRateButton.textContent = `${rate}×`;
 			localStorage.setItem('tts:rate', String(rate));
 		});
 
@@ -412,6 +562,9 @@ const minutes = Math.round(duration / 60);
 			fill.style.width = '0%';
 			elapsed.textContent = '0:00';
 			scrub.setAttribute('aria-valuenow', '0');
+			miniFill.style.width = '0%';
+			miniElapsed.textContent = '0:00';
+			miniScrub.setAttribute('aria-valuenow', '0');
 			spans[active]?.classList.remove('tts-active');
 			active = -1;
 		});
@@ -420,9 +573,9 @@ const minutes = Math.round(duration / 60);
 			localStorage.setItem('tts:chain', chain.checked ? '1' : '0'),
 		);
 
-		const seekTo = (event: PointerEvent) => {
+		const seekTo = (target: HTMLElement) => (event: PointerEvent) => {
 			const gen = opGen;
-			const box = scrub.getBoundingClientRect();
+			const box = target.getBoundingClientRect();
 			const ratio = Math.min(1, Math.max(0, (event.clientX - box.left) / box.width));
 			loadTiming()
 				.then(ready)
@@ -433,12 +586,40 @@ const minutes = Math.round(duration / 60);
 				})
 				.catch(() => {});
 		};
-		scrub.addEventListener('pointerdown', seekTo);
-		scrub.addEventListener('keydown', (event) => {
+		const seekByArrowKey = (event: KeyboardEvent) => {
 			if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
 			event.preventDefault();
 			audio.currentTime += event.key === 'ArrowRight' ? 10 : -10;
-		});
+		};
+		scrub.addEventListener('pointerdown', seekTo(scrub));
+		scrub.addEventListener('keydown', seekByArrowKey);
+		miniScrub.addEventListener('pointerdown', seekTo(miniScrub));
+		miniScrub.addEventListener('keydown', seekByArrowKey);
+
+		// Show the mini-player once the full player (whose bottom edge is the
+		// "line below" it, via its border) has scrolled up under the sticky
+		// navbar; hide it again once that edge is back on screen.
+		function updateMiniVisibility() {
+			// Starlight's client-side routing swaps in a fresh `[data-tts-player]`
+			// per page and re-runs setup() without a full reload, so a `window`
+			// listener from a page the visitor has already left behind would
+			// otherwise never be removed. Self-unregister once `root` is gone
+			// rather than tracking every page's listeners for manual teardown.
+			if (!root.isConnected) {
+				removeEventListener('scroll', updateMiniVisibility);
+				removeEventListener('resize', updateMiniVisibility);
+				return;
+			}
+			// Re-queried rather than cached: `header.header` may not exist yet
+			// at setup() time on some navigations, and a cached `null` would
+			// wedge `navHeight` at 0 for the rest of the page's lifetime.
+			const header = document.querySelector<HTMLElement>('header.header');
+			const navHeight = header?.getBoundingClientRect().height ?? 0;
+			mini.toggleAttribute('data-visible', root.getBoundingClientRect().bottom < navHeight);
+		}
+		addEventListener('scroll', updateMiniVisibility, { passive: true });
+		addEventListener('resize', updateMiniVisibility);
+		updateMiniVisibility();
 
 		// Click a sentence to jump to it. Ignored while text is being selected,
 		// so this does not fight with copying a quote.
