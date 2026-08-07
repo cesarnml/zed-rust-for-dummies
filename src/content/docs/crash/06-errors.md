@@ -198,6 +198,73 @@ you are doing, because writing the reason down is how you find out you were wron
    the top level. What does the program print when it returns an `Err`?
 
 <details>
+<summary>Solution to 1</summary>
+
+```rust
+#[derive(Debug)]
+enum ConfigError {
+    Missing(String),
+    NotANumber { key: String, value: String },
+    Range { key: String, max: u32 },
+}
+
+impl fmt::Display for ConfigError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ConfigError::Missing(key) => write!(f, "missing key: {key}"),
+            ConfigError::NotANumber { key, value } => {
+                write!(f, "key {key} is not a number: {value}")
+            }
+            ConfigError::Range { key, max } => {
+                write!(f, "key {key} must be at most {max}")
+            }
+        }
+    }
+}
+
+fn get_number_in_range(
+    config: &HashMap<String, String>,
+    key: &str,
+    max: u32,
+) -> Result<u32, ConfigError> {
+    let value = get_number(config, key)?;
+    if value > max {
+        return Err(ConfigError::Range { key: key.to_string(), max });
+    }
+    Ok(value)
+}
+```
+
+Same pattern as `get_number` itself: call the fallible thing with `?`, then add
+your own check and return your own `Err` variant when that check fails. Adding the
+`Range` variant makes the existing `match` in `Display` non-exhaustive until you
+add its arm — the compiler finds that call site for you too.
+
+</details>
+
+<details>
+<summary>Solution to 2</summary>
+
+```rust
+fn get_number(config: &HashMap<String, String>, key: &str) -> Result<u32, Box<dyn std::error::Error>> {
+    let raw = get(config, key)?;   // ConfigError -> Box<dyn Error>, via a blanket From impl
+    let value = raw.parse()?;      // ParseIntError -> Box<dyn Error>, a DIFFERENT error type
+    Ok(value)
+}
+```
+
+Before this change, `?` only worked because both fallible calls inside
+`get_number` produced the *same* error type, `ConfigError`. `Box<dyn
+std::error::Error>` is a trait object — "some type implementing `Error`, I don't
+care which" — so `?` can now convert *any* error type that implements
+`std::error::Error` into it automatically. That conversion is exactly why the
+book's earlier `impl std::error::Error for ConfigError {}` wasn't decoration: without
+it, `ConfigError` couldn't be boxed this way, and this line wouldn't compile. This
+is also the shape `anyhow` automates for application code, mentioned above.
+
+</details>
+
+<details>
 <summary>Answer to 3</summary>
 
 `main` may return `Result`. On `Err` the runtime prints the **`Debug`**

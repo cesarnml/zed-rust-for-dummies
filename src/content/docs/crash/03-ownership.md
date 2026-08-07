@@ -195,6 +195,32 @@ Rust can manage files, locks and sockets with the same mechanism as memory.
    before running.
 
 <details>
+<summary>Solution to 1</summary>
+
+```rust
+fn excited(mut s: String) -> String {
+    s.push('!');
+    s
+}
+
+fn main() {
+    let original = String::from("hello");
+    let a = excited(original.clone());
+    let b = excited(original.clone());
+    println!("{a} {b} {original}");   // hello! hello! hello
+}
+```
+
+`excited` takes `s: String` by value, so calling it moves its argument in. Pass
+`original` a second time without cloning and it's `E0382` — the compiler telling
+you `original` was already moved into the first call and no longer exists. The
+clone is a genuine heap allocation each time, paid explicitly, because you needed
+`original` to still be usable afterward. Hour 4 shows the alternative: take `&str`
+and there is nothing to move, so nothing to clone.
+
+</details>
+
+<details>
 <summary>Solution to 2</summary>
 
 ```rust
@@ -212,6 +238,48 @@ fn main() {
 Take `&str`, pass `&text`. The function only reads, so it should borrow. This is
 the single most common fix you will make for the next month, and it is exactly the
 reasoning behind the diff's helpers taking `&Theme` rather than `&App`.
+
+</details>
+
+<details>
+<summary>Solution to 3</summary>
+
+```rust
+struct Noisy(&'static str);
+
+impl Drop for Noisy {
+    fn drop(&mut self) {
+        println!("dropping {}", self.0);
+    }
+}
+
+fn main() {
+    let _first = Noisy("first");
+    {
+        let _inner = Noisy("inner");
+        println!("inside the block");
+    }
+    let _second = Noisy("second");
+    println!("end of main");
+}
+```
+
+Output:
+
+```
+inside the block
+dropping inner
+end of main
+dropping second
+dropping first
+```
+
+`_inner` drops the instant its own `{ }` block ends — before `main` even reaches
+`println!("end of main")` — because drop is tied to *scope*, not to the function
+the value happens to live in. `_second` then drops before `_first`, same reverse-
+declaration-order rule as before. This is the detail that matters later: a value
+scoped to a tighter block (a loop body, an `if`, a match arm) frees its resources
+the moment that block ends, not when the enclosing function returns.
 
 </details>
 

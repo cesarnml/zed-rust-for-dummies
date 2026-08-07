@@ -228,6 +228,61 @@ columns.
    ways: with `filter_map` and with `flatten`.
 
 <details>
+<summary>Solution to 1</summary>
+
+```rust
+use std::collections::HashMap;
+
+fn word_counts(text: &str) -> HashMap<String, usize> {
+    text.split_whitespace()
+        .map(|word| {
+            word.chars()
+                .filter(|c| c.is_alphanumeric())
+                .collect::<String>()
+                .to_lowercase()
+        })
+        .filter(|w| !w.is_empty())
+        .fold(HashMap::new(), |mut acc, word| {
+            *acc.entry(word).or_insert(0) += 1;
+            acc
+        })
+}
+```
+
+`fold` carries an accumulator (`HashMap::new()` to start) through the whole
+iterator and returns it at the end — the same shape as the `for` loop, just with
+the "empty counts, then update per item" made explicit as the fold's two
+arguments instead of implicit in a mutable variable declared above the loop.
+
+</details>
+
+<details>
+<summary>Solution to 2</summary>
+
+```rust
+use std::collections::HashSet;
+
+fn unique_words(text: &str) -> Vec<String> {
+    let mut seen = HashSet::new();
+    let mut order = Vec::new();
+    for word in text.split_whitespace() {
+        let cleaned = word.to_lowercase();
+        if seen.insert(cleaned.clone()) {   // insert returns true if it was NEW
+            order.push(cleaned);
+        }
+    }
+    order
+}
+```
+
+`HashSet::insert` returns `true` exactly when the value wasn't already present —
+that return value doubles as the "have I seen this?" check, so one call does both
+the membership test and the insert. The `Vec` alongside it is what gives you
+back insertion order, which a `HashSet` alone never guarantees.
+
+</details>
+
+<details>
 <summary>Solution to 3</summary>
 
 ```rust

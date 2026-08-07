@@ -177,6 +177,42 @@ and are ignored — use them in large literals.
    a tuple is the idiomatic way and takes four arms.
 
 <details>
+<summary>Solution to 1</summary>
+
+```rust
+"kg" => Some(value * 2.20462),
+"lb" => Some(value * 0.453592),
+```
+
+Two more arms in the same `match`, same shape as `"km"`/`"mi"`. Nothing else in
+`convert` needs to change — that's the point of `match` being exhaustive over
+`&str` values you control: adding a case is additive, not a rewrite.
+
+</details>
+
+<details>
+<summary>Solution to 2</summary>
+
+```rust
+fn convert(value: f64, unit: &str) -> Option<f64> {
+    match unit.to_lowercase().as_str() {
+        "c" => Some(value * 9.0 / 5.0 + 32.0),
+        "f" => Some((value - 32.0) * 5.0 / 9.0),
+        "km" => Some(value * 0.621_371),
+        "mi" => Some(value / 0.621_371),
+        _ => None,
+    }
+}
+```
+
+`unit.to_lowercase()` returns an owned `String`, and `match` needs a `&str` to
+compare against string literals — `.as_str()` borrows it just long enough for the
+match. This is the same "own it, then borrow a view for the call" pattern from
+hour 3, showing up before you've formally met it.
+
+</details>
+
+<details>
 <summary>Solution to 3</summary>
 
 ```rust

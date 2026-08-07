@@ -239,6 +239,29 @@ the value after the mutation — but reach for it second, not first.
 
 </details>
 
+<details>
+<summary>Solution to 3</summary>
+
+```rust
+fn retain_even(v: &mut Vec<i32>) {
+    v.retain(|n| n % 2 == 0);
+}
+
+fn main() {
+    let mut nums = vec![1, 2, 3, 4, 5, 6, 7, 8];
+    retain_even(&mut nums);
+    println!("{nums:?}");   // [2, 4, 6, 8]
+}
+```
+
+`&mut Vec<i32>` is a borrow, not ownership — `retain_even` can mutate the caller's
+vector in place and hand it right back, no `Vec` returned, no clone. `retain`
+takes a closure and keeps only the elements it returns `true` for, walking the
+vector once and shifting survivors down — the standard-library version of the loop
+you'd otherwise write by hand with an index and a `Vec::with_capacity`.
+
+</details>
+
 ## What you should be able to do now
 
 Explain the one rule, read an `E0502`, and say why a struct holding a `&str`

@@ -225,6 +225,45 @@ callbacks.
    the PR makes.
 
 <details>
+<summary>Solution to 1</summary>
+
+```rust
+fn longest_line<'a>(text: &'a str) -> &'a str {
+    text.lines().max_by_key(|line| line.len()).unwrap_or("")
+}
+
+fn main() {
+    let text = "short\na much longer line here\nmid";
+    println!("{}", longest_line(text));
+}
+```
+
+Delete both `'a`s and it still compiles — `fn longest_line(text: &str) -> &str`.
+This is elision rule 2: exactly one input reference, so the compiler assigns its
+lifetime to the output without being told. The annotation was never adding a
+constraint the compiler couldn't already see; it was just making it visible.
+
+</details>
+
+<details>
+<summary>Solution to 2</summary>
+
+```rust
+fn pick<'a>(a: &'a str, b: &'a str) -> &'a str {
+    if a.len() > b.len() { a } else { b }
+}
+```
+
+Two input references and elision rule 1 gives each its own independent
+lifetime — with no further rule to connect them to the output, the compiler
+can't tell whether the return value came from `a`, `b`, or either, so it refuses
+to guess. Naming both parameters `'a` explicitly is the fix: it says "the
+result is valid for as long as *both* inputs are," matching the `longer`
+function earlier on this page exactly.
+
+</details>
+
+<details>
 <summary>Solution to 3</summary>
 
 ```rust

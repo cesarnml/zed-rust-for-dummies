@@ -296,6 +296,58 @@ mechanism behind the PR's `ConfiguredTheme` trait having a blanket default while
    site — and what stops being possible.
 
 <details>
+<summary>Solution to 1</summary>
+
+```rust
+impl Render for String {
+    fn render(&self) -> String {
+        self.clone()
+    }
+    fn name(&self) -> &'static str {
+        "string"
+    }
+}
+```
+
+`Render` is a trait defined in *your* crate, so coherence lets you implement it
+for `String` even though `String` itself is from the standard library — only one
+side of `impl Trait for Type` has to be local. You could not do this for a
+foreign trait on a foreign type (`impl std::fmt::Display for String`, say);
+that's the case the orphan rule exists to block.
+
+</details>
+
+<details>
+<summary>Solution to 2</summary>
+
+```rust
+struct Panel {
+    children: Vec<Box<dyn Render>>,
+}
+
+impl Render for Panel {
+    fn render(&self) -> String {
+        self.children
+            .iter()
+            .map(|child| child.render())
+            .collect::<Vec<_>>()
+            .join("\n")
+    }
+    fn name(&self) -> &'static str {
+        "panel"
+    }
+}
+```
+
+`Panel` holds `Box<dyn Render>` rather than a generic `T: Render`, because its
+children can be a genuine mix of concrete types — a `Button`, a `Divider`, even
+another `Panel`. Because `Panel` itself implements `Render`, a `Panel` can go
+inside another `Panel`'s `children` — nesting falls out for free once the trait
+object is the element type, no special-casing needed.
+
+</details>
+
+<details>
 <summary>Answer to 3</summary>
 
 The call site is unchanged (`&button` coerces). What you lose is inlining and

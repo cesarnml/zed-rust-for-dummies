@@ -261,6 +261,97 @@ possibility of writer starvation under constant reads.
 
 </details>
 
+<details>
+<summary>Solution to 2</summary>
+
+```rust
+impl Registry {
+    fn len(&self) -> usize {
+        self.themes.lock().expect("registry poisoned").len()
+    }
+}
+```
+
+Call `self.len()` from *inside* `get_or_insert` while that function's own
+`themes.lock()` guard is still in scope, and the program hangs rather than
+panics — `Mutex` isn't reentrant, so the thread blocks forever trying to
+acquire a lock it is already holding:
+
+```rust
+fn get_or_insert(&self, name: &str) -> Arc<Theme> {
+    let mut themes = self.themes.lock().expect("registry poisoned");
+    let result = themes
+        .entry(name.to_string())
+        .or_insert_with(|| Arc::new(Theme { name: name.to_string() }))
+        .clone();
+    println!("registry now has {}", self.len());   // deadlock — lock held above
+    result
+}
+```
+
+The fix is to end the first borrow before taking the second — put the lock
+acquisition in its own inner block so the guard drops when the block ends, then
+call `self.len()` after:
+
+```rust
+fn get_or_insert(&self, name: &str) -> Arc<Theme> {
+    let result = {
+        let mut themes = self.themes.lock().expect("registry poisoned");
+        themes
+            .entry(name.to_string())
+            .or_insert_with(|| Arc::new(Theme { name: name.to_string() }))
+            .clone()
+    };   // guard dropped here — lock released
+    println!("registry now has {}", self.len());
+    result
+}
+```
+
+This is the runtime cost of interior mutability the compiler warned you about
+back at `RefCell`: the "only one writer" rule still holds, it's just enforced by
+blocking (or panicking, for `RefCell`) instead of refusing to compile.
+
+</details>
+
+<details>
+<summary>Solution to 3</summary>
+
+```rust
+use std::cell::RefCell;
+use std::rc::Rc;
+
+fn main() {
+    let log = Rc::new(RefCell::new(Vec::<String>::new()));
+
+    let a = Rc::clone(&log);
+    let push_a = move || a.borrow_mut().push("from a".to_string());
+
+    let b = Rc::clone(&log);
+    let push_b = move || b.borrow_mut().push("from b".to_string());
+
+    push_a();
+    push_b();
+    println!("{:?}", log.borrow());   // ["from a", "from b"]
+
+    // Now the panic: two overlapping borrow_mut()s
+    let first = log.borrow_mut();
+    let second = log.borrow_mut();    // panics: already mutably borrowed
+    println!("{first:?} {second:?}");
+}
+```
+
+Each closure gets its own `Rc::clone` (a pointer + counter bump, not a deep
+copy of the `Vec`) so both can independently reach the same underlying data —
+this is `Rc<RefCell<T>>`, the standard single-threaded "shared and mutable"
+combo. The final two lines panic with `already borrowed: BorrowMutError`
+because `first` is still a live `RefMut` when `second` tries to take another
+one — `RefCell` enforces the same "one writer, no concurrent readers" rule
+`&mut` enforces at compile time, just discovered at runtime instead. Comment
+out the last two lines and the program runs clean; that's the trade you're
+seeing directly.
+
+</details>
+
 ## What you should be able to do now
 
 Explain why `Arc::clone` is cheap, when you need `Arc<Mutex<T>>`, and what `Send`

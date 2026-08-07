@@ -228,6 +228,46 @@ fn main() {
 3. Give `Theme` a `fn is_readable(&self) -> bool` and call it from `label`.
 
 <details>
+<summary>Solution to 1</summary>
+
+<!-- rust:skip -->
+```rust
+enum Shape {
+    Circle { radius: f64 },
+    Rectangle { width: f64, height: f64 },
+    Triangle { base: f64, height: f64 },
+    Square { side: f64 },
+}
+
+impl Shape {
+    fn area(&self) -> f64 {
+        match self {
+            Shape::Circle { radius } => std::f64::consts::PI * radius * radius,
+            Shape::Rectangle { width, height } => width * height,
+            Shape::Triangle { base, height } => 0.5 * base * height,
+            Shape::Square { side } => side * side,
+        }
+    }
+
+    fn name(&self) -> &'static str {
+        match self {
+            Shape::Circle { .. } => "circle",
+            Shape::Rectangle { .. } => "rectangle",
+            Shape::Triangle { .. } => "triangle",
+            Shape::Square { .. } => "square",
+        }
+    }
+}
+```
+
+Add the variant, then try to compile the file as it stood before: both `match`es
+in `area` and `name` fail with "non-exhaustive patterns: `Shape::Square { .. }` not
+covered". You don't go looking for the two spots that need updating — the compiler
+lists them. That's the exercise: notice you never grepped for `Shape::`.
+
+</details>
+
+<details>
 <summary>Solution to 2</summary>
 
 Add this to the `impl`-block program above:
@@ -244,6 +284,33 @@ fn largest(shapes: &[Shape]) -> Option<&Shape> {
 `max_by` returns `Option` for you, because an empty slice has no maximum.
 `total_cmp` compares floats without the `NaN` problem that stops `f64` from
 implementing `Ord`. Iterators are [hour 7](/crash/07-collections/).
+
+</details>
+
+<details>
+<summary>Solution to 3</summary>
+
+```rust
+impl Theme {
+    fn is_readable(&self) -> bool {
+        // stand-in check: a real implementation would compare
+        // foreground/background contrast against a WCAG threshold
+        !self.name.is_empty()
+    }
+
+    fn label(&self) -> String {
+        let suffix = if self.is_readable() { "" } else { " (low contrast)" };
+        format!("{} ({}){}", self.name, if self.dark { "dark" } else { "light" }, suffix)
+    }
+}
+```
+
+`is_readable` takes `&self` — it only needs to read the theme's fields, never
+mutate them, so an exclusive `&mut self` or a consuming `self` would both be
+overkill (and the latter would make `label` unable to call it and still use
+`self.name` afterward). Calling one method from another on the same type is
+ordinary — `self.is_readable()` inside `label` is just a normal method call, no
+different from calling it from `main`.
 
 </details>
 

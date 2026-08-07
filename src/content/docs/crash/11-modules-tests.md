@@ -262,6 +262,146 @@ use them constantly and will almost certainly never write one.
 4. Run `cargo clippy` on everything you have written today and fix what it says.
    It will teach you idiom faster than any tutorial.
 
+<details>
+<summary>Solution to 1</summary>
+
+<!-- rust:skip -->
+```rust
+// src/registry.rs
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+
+#[derive(Debug)]
+pub struct Theme {
+    pub name: String,
+}
+
+#[derive(Default)]
+pub struct Registry {
+    themes: Mutex<HashMap<String, Arc<Theme>>>,
+}
+
+impl Registry {
+    pub fn get_or_insert(&self, name: &str) -> Arc<Theme> {
+        let mut themes = self.themes.lock().expect("registry poisoned");
+        themes
+            .entry(name.to_string())
+            .or_insert_with(|| Arc::new(Theme { name: name.to_string() }))
+            .clone()
+    }
+}
+```
+
+<!-- rust:skip -->
+```rust
+// src/main.rs
+mod registry;
+
+fn main() {
+    let registry = registry::Registry::default();
+    let theme = registry.get_or_insert("Ayu Dark");
+    println!("{}", theme.name);
+}
+```
+
+Only `Registry` and `get_or_insert` are `pub` — `Theme`'s fields are `pub` too
+here because `main.rs` reads `theme.name` directly, but the `themes` map field
+inside `Registry` stays private. `main.rs` only ever calls
+`registry::Registry::...`; it never reaches into the module's internals, which
+is the whole point of the module boundary.
+
+</details>
+
+<details>
+<summary>Solution to 2</summary>
+
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn same_name_returns_same_allocation() {
+        let registry = Registry::default();
+        let a = registry.get_or_insert("Ayu Dark");
+        let b = registry.get_or_insert("Ayu Dark");
+        assert!(Arc::ptr_eq(&a, &b));
+    }
+
+    #[test]
+    fn different_names_return_different_allocations() {
+        let registry = Registry::default();
+        let a = registry.get_or_insert("Ayu Dark");
+        let c = registry.get_or_insert("One Light");
+        assert!(!Arc::ptr_eq(&a, &c));
+    }
+
+    #[test]
+    fn stores_the_name_it_was_given() {
+        let registry = Registry::default();
+        let theme = registry.get_or_insert("Ayu Dark");
+        assert_eq!(theme.name, "Ayu Dark");
+    }
+}
+```
+
+`Arc::ptr_eq` is the assertion that actually tests the cache's reason for
+existing — two calls with the same key must hand back the *same allocation*,
+not two equal-looking ones. `use super::*;` is what lets this inline test
+module see `Registry` at all, since it's declared as a private item one module
+up.
+
+</details>
+
+<details>
+<summary>Solution to 3</summary>
+
+```rust
+impl Registry {
+    /// Returns the cached `Theme` for `name`, creating it on first request.
+    ///
+    /// ```
+    /// use hour11_test::registry::Registry;
+    ///
+    /// let registry = Registry::default();
+    /// let a = registry.get_or_insert("Ayu Dark");
+    /// let b = registry.get_or_insert("Ayu Dark");
+    /// assert!(std::sync::Arc::ptr_eq(&a, &b));
+    /// ```
+    pub fn get_or_insert(&self, name: &str) -> Arc<Theme> {
+        let mut themes = self.themes.lock().expect("registry poisoned");
+        themes
+            .entry(name.to_string())
+            .or_insert_with(|| Arc::new(Theme { name: name.to_string() }))
+            .clone()
+    }
+}
+```
+
+`cargo test` compiles and runs that fenced block as its own tiny program,
+reported as `Doc-tests <crate-name>` in the output — separately from the unit
+tests in exercise 2. The doctest has to use the crate's public path
+(`hour11_test::registry::Registry`, matching whatever your crate is actually
+named) since it's compiled as an outside consumer of your API, exactly like an
+integration test in `tests/`.
+
+</details>
+
+<details>
+<summary>On exercise 4</summary>
+
+There's no fixed answer to check this one against — `cargo clippy` reads
+*your* code from the hours before this one, so what it flags depends on what
+you wrote. What's worth expecting going in: it will very likely complain about
+`.clone()` calls it can prove are unnecessary, `&Vec<T>` parameters that should
+be `&[T]` (the slice-over-owned-collection rule from hour 7), and
+`.to_string()` where `.to_owned()` or a borrow would do. Each suggestion comes
+with a short rationale in the terminal — read those rather than blindly
+applying the fix; clippy is usually right, but the reasoning is the part worth
+keeping.
+
+</details>
+
 ## What you should be able to do now
 
 Lay out a multi-file crate, write and run tests, and read a `macro_rules!` block
